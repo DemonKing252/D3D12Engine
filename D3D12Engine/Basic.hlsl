@@ -1,6 +1,6 @@
 struct VSVertexIn
 {
-    float2 pos : POSITION;
+    float3 pos : POSITION;
     float3 col : COLOR;
 };
 struct PSVertexIn
@@ -23,7 +23,7 @@ VertexOut VSMain(VSVertexIn vIn)
 {
     // Just pass the position and color to the Pixel Shader, we aren't doing any transformations yet
     
-    float4 WorldP = mul(float4(vIn.pos, 0.0f, 1.0f), gWorld);
+    float4 WorldP = mul(float4(vIn.pos, 1.0f), gWorld);
     
     VertexOut vOut;    
     

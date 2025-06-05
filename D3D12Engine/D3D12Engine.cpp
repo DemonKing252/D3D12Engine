@@ -13,29 +13,26 @@ D3D12Engine::D3D12Engine(Win32App& win32App) : D3DApp(win32App)
 
 void D3D12Engine::CreateBuffers()
 {
-	// Vertex buffer
-	float vertices[] = {
 
-		// x,    y,			r,    g,    b
-		-0.5f, -0.5f,	   1.0f, 0.0f, 0.0f,
-		+0.0f, +0.5f,	   0.0f, 1.0f, 0.0f,
-		+0.5f, -0.5f,	   0.0f, 0.0f, 1.0f,
+	MeshGeometry triangleMesh = GeometryGenerator::CreateTriangle();
 
-		-0.5f, -0.5f,	   1.0f, 0.0f, 0.0f,
-		-0.5f, +0.5f,	   0.0f, 1.0f, 0.0f,
-		+0.0f, +0.5f,	   0.0f, 0.0f, 1.0f,
+	const UINT sizeInBytes = sizeof(Vertex) * triangleMesh.m_vVertices.size();
 
-		+0.0f, +0.5f,	   1.0f, 0.0f, 0.0f,
-		+0.5f, +0.5f,	   0.0f, 1.0f, 0.0f,
-		+0.5f, -0.5f,	   0.0f, 0.0f, 1.0f,
-	};
-
-	m_pVertexBuffer = std::make_unique<UploadBuffer<float>>(m_device.Get(), vertices, sizeof(vertices));
+	m_pVertexBuffer = std::make_unique<UploadBuffer<Vertex>>(m_device.Get(), triangleMesh.m_vVertices.data(), sizeInBytes);
 
 	ZeroMemory(&m_vertexBufferView, sizeof(D3D12_VERTEX_BUFFER_VIEW));
 	m_vertexBufferView.BufferLocation = m_pVertexBuffer->GetAddress();
-	m_vertexBufferView.StrideInBytes = 20U;
-	m_vertexBufferView.SizeInBytes = sizeof(vertices);
+	m_vertexBufferView.StrideInBytes = sizeof(Vertex);
+	m_vertexBufferView.SizeInBytes = sizeInBytes;
+
+	for (const auto& v : triangleMesh.m_vVertices)
+	{
+		char buffer[128];
+		sprintf_s(buffer, "Vertex Pos: (%f, %f, %f), Color: (%f, %f, %f)\n",
+			v.Position.x, v.Position.y, v.Position.z,
+			v.Color.x, v.Color.y, v.Color.z);
+		OutputDebugStringA(buffer);
+	}
 	
 	m_passConstants.World = XMMatrixTranspose(XMMatrixRotationZ(XMConvertToRadians(0.0f)));
 
@@ -78,8 +75,8 @@ void D3D12Engine::CreateGraphicsPipeline()
 	D3D12_INPUT_ELEMENT_DESC inputElementDesc[2];
 	ZeroMemory(&inputElementDesc, sizeof(D3D12_INPUT_ELEMENT_DESC));
 
-	inputElementDesc[0] = { "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0U, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	inputElementDesc[1] = { "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 8U, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	inputElementDesc[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0U, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	inputElementDesc[1] = { "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12U, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
 
 	ThrowIfFailed(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, signature.GetAddressOf(), errors.GetAddressOf()));
 
@@ -161,7 +158,7 @@ void D3D12Engine::OnRender()
 
 	m_commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
 
-	m_commandList->DrawInstanced(9, 1, 0, 0);
+	m_commandList->DrawInstanced(3, 1, 0, 0);
 
 	// Indicate that the back buffer will be used to present
 	m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_rtvResources[m_iBackBufferIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));

@@ -1,6 +1,7 @@
 #pragma once
 #include "D3DApp.h"
 #include "UploadHeap.h"
+#include "GeometryGenerator.h"
 #include <memory>
 class Win32App;
 class D3D12Engine : public D3DApp
@@ -17,7 +18,7 @@ private:
 	ComPtr<ID3D12RootSignature> m_rootSignature;
 	ComPtr<ID3D12PipelineState> m_defaultPipeline;
 
-	std::unique_ptr<UploadBuffer<float>> m_pVertexBuffer;
+	std::unique_ptr<UploadBuffer<Vertex>> m_pVertexBuffer;
 	std::unique_ptr<UploadBuffer<PassConstants>> m_pConstantBuffer;
 	//ComPtr<ID3D12Resource> m_pVertexBufferResource;
 	D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;

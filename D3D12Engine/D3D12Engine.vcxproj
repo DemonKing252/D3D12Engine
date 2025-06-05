@@ -127,6 +127,7 @@
     <ClInclude Include="D3DApp.h" />
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="DDSTextureLoader.h" />
+    <ClInclude Include="GeometryGenerator.h" />
     <ClInclude Include="UploadHeap.h" />
     <ClInclude Include="Win32App.h" />
   </ItemGroup>
@@ -134,6 +135,7 @@
     <ClCompile Include="D3D12Engine.cpp" />
     <ClCompile Include="D3DApp.cpp" />
     <ClCompile Include="DDSTextureLoader.cpp" />
+    <ClCompile Include="GeometryGenerator.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="UploadHeap.cpp" />
     <ClCompile Include="Win32App.cpp" />
