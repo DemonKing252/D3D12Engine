@@ -2,6 +2,7 @@
 #include "D3DApp.h"
 #include "UploadHeap.h"
 #include "GeometryGenerator.h"
+#include "SceneNode.h"
 #include <memory>
 class Win32App;
 class D3D12Engine : public D3DApp
@@ -19,11 +20,12 @@ private:
 	ComPtr<ID3D12PipelineState> m_defaultPipeline;
 
 	std::unique_ptr<UploadBuffer<Vertex>> m_pVertexBuffer;
-	std::unique_ptr<UploadBuffer<PassConstants>> m_pConstantBuffer;
-	//ComPtr<ID3D12Resource> m_pVertexBufferResource;
+	std::unique_ptr<UploadBuffer<PassConstants>> m_pConstantBuffer[2];
+	
+	std::vector<std::unique_ptr<SceneNode>> m_sceneGraph;
+	
 	D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
-
-	//ComPtr<ID3D12Resource> m_pConstantBufferResource;
+	ComPtr<ID3D12DescriptorHeap> m_pCBVDescriptorHeap;
 
 	D3D12_VIEWPORT m_vViewPort;
 	D3D12_RECT m_rScissorsRect;
@@ -37,6 +39,7 @@ public:
 	void CreateBuffers();
 	void CompileShaders();
 	void CreateGraphicsPipeline();
+	void BuildDescriptorHeaps();
 
 	void OnUpdate() override;
 	void OnRender() override;

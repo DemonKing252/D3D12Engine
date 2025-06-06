@@ -70,5 +70,5 @@ protected:
 	HANDLE m_handle;
 
 	void InitializeD3D();
-	void BuildDescriptorHeaps();
+	void BuildRenderTarget();
 };

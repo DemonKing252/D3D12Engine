@@ -51,7 +51,7 @@ UploadBuffer<T>::UploadBuffer(ID3D12Device* device, T* data, size_t size)
 		IID_PPV_ARGS(&m_pUploadBuffer))
 	);
 	ThrowIfFailed(m_pUploadBuffer->Map(0, nullptr, &m_pBytes));
-	CopyMemory(m_pBytes, data, size);
+	CopyMemory(reinterpret_cast<UINT8*>(m_pBytes), data, size);
 	m_pUploadBuffer->Unmap(0, nullptr);
 }
 template<class T>

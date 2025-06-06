@@ -64,7 +64,7 @@ void D3DApp::InitializeD3D()
 
 }
 
-void D3DApp::BuildDescriptorHeaps()
+void D3DApp::BuildRenderTarget()
 {
     // step 9: create a descriptor heap which will hold the back buffer memory addresses
     D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc;
