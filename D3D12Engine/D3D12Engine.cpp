@@ -7,9 +7,9 @@ D3D12Engine::D3D12Engine(Win32App& win32App) : D3DApp(win32App)
 	this->D3DApp::BuildRenderTarget();
 	this->CompileShaders();
 	this->CreateGraphicsPipeline();
-	this->BuildDescriptorHeaps();
+	this->CreateSceneGraph();
+	this->BuildPassConstantResources();
 	this->CreateBuffers();
-	
 }
 
 void D3D12Engine::CreateBuffers()
@@ -36,6 +36,8 @@ void D3D12Engine::CreateBuffers()
 	}
 	
 
+	// Create the scene graph first then create the CBV based on the number of descriptors we need
+
 	// Liam's Notes:
 	// There's 3 different ways we could go about this:	 
 	/*
@@ -44,28 +46,48 @@ void D3D12Engine::CreateBuffers()
 		Option C - Use 2 parallel resources (without a constant buffer view descriptor) and set the accordingly using cmdList. Note that this requires you to modify the root signature parameters as well
 		Option D - (not efficent) - Use root constants which doesn't require a descriptor heap. However you are also resonsible for tracking each root location in the cbuffer. This becomes very messy with a bigger project.
 	*/
-	m_pConstantBuffer[0] = std::make_unique<UploadBuffer<PassConstants>>(m_device.Get(), &m_passConstants, 256U);
-	m_passConstants.World = XMMatrixTranspose(XMMatrixTranslation(-0.5f, 0.0f, 0.0f));
-	m_pConstantBuffer[0]->CopyData(&m_passConstants);
 
-	m_pConstantBuffer[1] = std::make_unique<UploadBuffer<PassConstants>>(m_device.Get(), &m_passConstants, 256U);
-	m_passConstants.World = XMMatrixTranspose(XMMatrixTranslation(0.5f, 0.0f, 0.0f));
-	m_pConstantBuffer[1]->CopyData(&m_passConstants);
 	
-	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
-	ZeroMemory(&cbvDesc, sizeof(D3D12_CONSTANT_BUFFER_VIEW_DESC));
-
-	cbvDesc.BufferLocation = m_pConstantBuffer[0]->GetAddress();
-	cbvDesc.SizeInBytes = 256U;
-
-	m_device->CreateConstantBufferView(&cbvDesc, m_pCBVDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-
-	CD3DX12_CPU_DESCRIPTOR_HANDLE cbvHandle(m_pCBVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), 1, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-
-	cbvDesc.BufferLocation = m_pConstantBuffer[1]->GetAddress();
-	m_device->CreateConstantBufferView(&cbvDesc, cbvHandle);
 
 }
+
+void D3D12Engine::CreateSceneGraph()
+{
+	m_pSceneHierarchy = new SceneNode();
+	
+	auto* triangleA = new SceneNode(true, XMFLOAT3(-0.5f, 0.0f, 0.0f));
+	m_pSceneHierarchy->AddChild(triangleA);
+
+	auto* triangleB = new SceneNode(true, XMFLOAT3(+0.5f, 0.0f, 0.0f));
+	auto* triangleC = new SceneNode(true, XMFLOAT3(+0.0f, -0.25f, 0.0f));
+
+	triangleB->AddChild(triangleC);
+	
+	m_pSceneHierarchy->AddChild(triangleB);
+	
+	char buffer[200];
+	sprintf_s(buffer, "Num Instances: %i\n", SceneNode::Instances());
+
+	OutputDebugStringA(buffer);
+	for (auto c : m_pSceneHierarchy->GetChildren())
+	{
+		char buffer[220];
+		sprintf_s(buffer, "[Child index: %i], [x: %f], [y: %f]\n", c->RenderableNodeIndex(), c->Position.x, c->Position.y);
+
+		OutputDebugStringA(buffer);
+
+		for (auto c_of_c : c->GetChildren())
+		{
+
+			sprintf_s(buffer, "[Child index: %i], [x: %f], [y: %f]\n", c_of_c->RenderableNodeIndex(), c_of_c->Position.x, c_of_c->Position.y);
+
+			OutputDebugStringA(buffer);
+		}
+	}
+
+	//OutputDebugStringA(buffer);
+}
+
 
 void D3D12Engine::CompileShaders()
 {
@@ -147,16 +169,90 @@ void D3D12Engine::CreateGraphicsPipeline()
 	m_vViewPort.MaxDepth = 1.0f;
 }
 
-void D3D12Engine::BuildDescriptorHeaps()
+void D3D12Engine::BuildPassConstantResources()
 {
 	D3D12_DESCRIPTOR_HEAP_DESC cbvDescHeap;
 	ZeroMemory(&cbvDescHeap, sizeof(D3D12_DESCRIPTOR_HEAP_DESC));
 
-	cbvDescHeap.NumDescriptors = 2;
+	cbvDescHeap.NumDescriptors = SceneNode::Instances();
 	cbvDescHeap.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	cbvDescHeap.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	
 	ThrowIfFailed(m_device->CreateDescriptorHeap(&cbvDescHeap, IID_PPV_ARGS(m_pCBVDescriptorHeap.GetAddressOf())));
+
+
+	m_pConstantBuffer = std::make_unique<UploadBuffer<PassConstants>>(m_device.Get(), &m_passConstants, SceneNode::Instances() * 256U);
+
+	//m_passConstants.World = XMMatrixTranspose(XMMatrixTranslation(-0.5f, 0.0f, 0.0f));
+	//m_pConstantBuffer->CopyData(0, &m_passConstants);
+	//
+	//m_passConstants.World = XMMatrixTranspose(XMMatrixTranslation(+0.5f, 0.0f, 0.0f));
+	//m_pConstantBuffer->CopyData(1, &m_passConstants);
+
+	const UINT cbvDescriptorHandleIncrementSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	UINT drawableIndex = 0;
+
+	auto allocate_resource_memory = [this, &drawableIndex, &cbvDescriptorHandleIncrementSize] (SceneNode* c)
+	{
+		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
+		ZeroMemory(&cbvDesc, sizeof(D3D12_CONSTANT_BUFFER_VIEW_DESC));
+
+		cbvDesc.BufferLocation = m_pConstantBuffer->GetAddress(drawableIndex);
+		cbvDesc.SizeInBytes = 256U;
+
+		CD3DX12_CPU_DESCRIPTOR_HANDLE sceneNodeCPUHandle(m_pCBVDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+		sceneNodeCPUHandle.Offset(drawableIndex, cbvDescriptorHandleIncrementSize);
+
+		CD3DX12_GPU_DESCRIPTOR_HANDLE sceneNodeGPUHandle(m_pCBVDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+		sceneNodeGPUHandle.Offset(drawableIndex, cbvDescriptorHandleIncrementSize);
+
+		m_device->CreateConstantBufferView(&cbvDesc, sceneNodeCPUHandle);
+
+		m_passConstants.World = XMMatrixTranspose(
+			XMMatrixTranslation(
+				c->Position.x,
+				c->Position.y,
+				c->Position.z
+			));
+
+		m_pConstantBuffer->CopyData(
+			drawableIndex,
+			&m_passConstants
+		);
+		c->SetRenderableNodeIndex(drawableIndex);
+
+		c->SetGraphicsHandleToConstantBuffer(sceneNodeGPUHandle);
+		++drawableIndex;
+	};
+
+	
+	for (auto& node : m_pSceneHierarchy->GetChildren())
+	{
+		if (!node->IsRenderable())
+			continue;
+
+		allocate_resource_memory(node);
+
+		for (auto node_of_node : node->GetChildren())
+		{
+			allocate_resource_memory(node_of_node);
+		}
+	}
+
+	for (auto c : m_pSceneHierarchy->GetChildren())
+	{
+		char buffer[220];
+		sprintf_s(buffer, "[Child index: %i], [x: %f], [y: %f]\n", c->RenderableNodeIndex(), c->Position.x, c->Position.y);
+
+		OutputDebugStringA(buffer);
+	}
+
+	int x = 1;
+
+	//CD3DX12_CPU_DESCRIPTOR_HANDLE cbvHandle(m_pCBVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), 1, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+	//
+	//cbvDesc.BufferLocation = m_pConstantBuffer->GetAddress(1);
+	//m_device->CreateConstantBufferView(&cbvDesc, cbvHandle);
 }
 
 void D3D12Engine::OnUpdate()
@@ -169,8 +265,8 @@ void D3D12Engine::OnRender()
 	m_swapChain->QueryInterface(IID_PPV_ARGS(&m_swapChain3));
 	m_iBackBufferIndex = m_swapChain3->GetCurrentBackBufferIndex();
 
-	ThrowIfFailed(m_commandAllocator->Reset());
-	ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
+	ThrowIfFailed( m_commandAllocator->Reset() );
+	ThrowIfFailed( m_commandList->Reset(m_commandAllocator.Get(), nullptr) );
 
 	// indicate that the back buffer will be used as a render target
 	m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_rtvResources[m_iBackBufferIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
@@ -191,28 +287,22 @@ void D3D12Engine::OnRender()
 	m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	m_commandList->SetDescriptorHeaps(1, m_pCBVDescriptorHeap.GetAddressOf());
-
-	CD3DX12_GPU_DESCRIPTOR_HANDLE cbvGPUHandle(m_pCBVDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-
-	m_commandList->SetGraphicsRootDescriptorTable(0, m_pCBVDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-
 	m_commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
 
-	// draw call #1
-	m_commandList->DrawInstanced(3, 1, 0, 0);
+	m_pSceneHierarchy->Draw(m_commandList.Get());
 
 	// next descriptor
-	cbvGPUHandle.Offset(1, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-
-	m_commandList->SetGraphicsRootDescriptorTable(0, cbvGPUHandle);
-
-	// draw call #2
-	m_commandList->DrawInstanced(3, 1, 0, 0);
+	//cbvGPUHandle.Offset(1, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+	//
+	//m_commandList->SetGraphicsRootDescriptorTable(0, cbvGPUHandle);
+	//
+	//// draw call #2
+	//m_commandList->DrawInstanced(3, 1, 0, 0);
 
 	// Indicate that the back buffer will be used to present
 	m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_rtvResources[m_iBackBufferIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
-	ThrowIfFailed(m_commandList->Close());
+	ThrowIfFailed( m_commandList->Close() );
 
 	// submit the command list to the GPU
 	ID3D12CommandList* cmdLists[] = { m_commandList.Get() };

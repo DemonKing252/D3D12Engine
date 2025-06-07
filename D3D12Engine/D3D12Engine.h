@@ -20,9 +20,9 @@ private:
 	ComPtr<ID3D12PipelineState> m_defaultPipeline;
 
 	std::unique_ptr<UploadBuffer<Vertex>> m_pVertexBuffer;
-	std::unique_ptr<UploadBuffer<PassConstants>> m_pConstantBuffer[2];
+	std::unique_ptr<UploadBuffer<PassConstants>> m_pConstantBuffer;
 	
-	std::vector<std::unique_ptr<SceneNode>> m_sceneGraph;
+	SceneNode* m_pSceneHierarchy;
 	
 	D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
 	ComPtr<ID3D12DescriptorHeap> m_pCBVDescriptorHeap;
@@ -39,7 +39,8 @@ public:
 	void CreateBuffers();
 	void CompileShaders();
 	void CreateGraphicsPipeline();
-	void BuildDescriptorHeaps();
+	void BuildPassConstantResources();
+	void CreateSceneGraph();
 
 	void OnUpdate() override;
 	void OnRender() override;

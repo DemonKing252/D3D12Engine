@@ -28,9 +28,9 @@ class UploadBuffer
 public:
 	UploadBuffer(ID3D12Device* device, T* data, size_t size);
 
-	D3D12_GPU_VIRTUAL_ADDRESS GetAddress() const;
+	D3D12_GPU_VIRTUAL_ADDRESS GetAddress(const UINT offsetInDescriptorHeap = 0) const;
 	ComPtr<ID3D12Resource> GetBuffer() const;
-	void CopyData(T* data);
+	void CopyData(const UINT offsetInDescriptorHeap, T* data);
 	
 private:
 	size_t m_size;
@@ -39,10 +39,10 @@ private:
 };
 
 template<class T>
-UploadBuffer<T>::UploadBuffer(ID3D12Device* device, T* data, size_t size)
+UploadBuffer<T>::UploadBuffer(ID3D12Device* d3dDevice, T* data, size_t size)
 {
 	this->m_size = size;
-	ThrowIfFailed(device->CreateCommittedResource(
+	ThrowIfFailed(d3dDevice->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
 		D3D12_HEAP_FLAG_NONE,
 		&CD3DX12_RESOURCE_DESC::Buffer(size),
@@ -50,14 +50,19 @@ UploadBuffer<T>::UploadBuffer(ID3D12Device* device, T* data, size_t size)
 		nullptr,
 		IID_PPV_ARGS(&m_pUploadBuffer))
 	);
+	
 	ThrowIfFailed(m_pUploadBuffer->Map(0, nullptr, &m_pBytes));
-	CopyMemory(reinterpret_cast<UINT8*>(m_pBytes), data, size);
+	CopyMemory(
+		reinterpret_cast<UINT8*>(m_pBytes), 
+		data, 
+		size
+	);
 	m_pUploadBuffer->Unmap(0, nullptr);
 }
 template<class T>
-D3D12_GPU_VIRTUAL_ADDRESS UploadBuffer<T>::GetAddress() const
+D3D12_GPU_VIRTUAL_ADDRESS UploadBuffer<T>::GetAddress(const UINT offsetInDescriptorHeap) const
 {
-	return m_pUploadBuffer->GetGPUVirtualAddress();
+	return m_pUploadBuffer->GetGPUVirtualAddress() + offsetInDescriptorHeap * 256U;
 }
 
 template<class T>
@@ -67,7 +72,11 @@ ComPtr<ID3D12Resource> UploadBuffer<T>::GetBuffer() const
 }
 
 template<class T>
-void UploadBuffer<T>::CopyData(T* data)
+void UploadBuffer<T>::CopyData(const UINT offsetInDescriptorHeap, T* data)
 {
-	CopyMemory(m_pBytes, data, m_size);
+	CopyMemory(
+		reinterpret_cast<UINT8*>(m_pBytes) + offsetInDescriptorHeap * 256U, 
+		data, 
+		m_size
+	);
 }
