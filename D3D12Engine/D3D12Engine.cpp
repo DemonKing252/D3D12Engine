@@ -7,33 +7,47 @@ D3D12Engine::D3D12Engine(Win32App& win32App) : D3DApp(win32App)
 	this->D3DApp::BuildRenderTarget();
 	this->CompileShaders();
 	this->CreateGraphicsPipeline();
+	this->CreateGeometry();
 	this->CreateSceneGraph();
 	this->BuildPassConstantResources();
-	this->CreateBuffers();
 }
 
-void D3D12Engine::CreateBuffers()
+void D3D12Engine::CreateGeometry()
 {
-
-	MeshGeometry triangleMesh = GeometryGenerator::CreateTriangle();
-
-	const UINT sizeInBytes = sizeof(Vertex) * triangleMesh.m_vVertices.size();
-
-	m_pVertexBuffer = std::make_unique<UploadBuffer<Vertex>>(m_device.Get(), triangleMesh.m_vVertices.data(), sizeInBytes);
-
-	ZeroMemory(&m_vertexBufferView, sizeof(D3D12_VERTEX_BUFFER_VIEW));
-	m_vertexBufferView.BufferLocation = m_pVertexBuffer->GetAddress();
-	m_vertexBufferView.StrideInBytes = sizeof(Vertex);
-	m_vertexBufferView.SizeInBytes = sizeInBytes;
-
-	for (const auto& v : triangleMesh.m_vVertices)
 	{
-		char buffer[128];
-		sprintf_s(buffer, "Vertex Pos: (%f, %f, %f), Color: (%f, %f, %f)\n",
-			v.Position.x, v.Position.y, v.Position.z,
-			v.Color.x, v.Color.y, v.Color.z);
-		OutputDebugStringA(buffer);
+		GeometryData triangleMeshData = GeometryGenerator::CreateTriangle();
+
+		const UINT vertexSize = sizeof(Vertex) * triangleMeshData.m_vVertices.size();
+		auto vertexBufferResource = new UploadBuffer<Vertex>(m_device.Get(), triangleMeshData.m_vVertices.data(), vertexSize);
+
+		const UINT indexSize = sizeof(UINT) * triangleMeshData.m_vIndicies.size();
+		auto indexBufferResource = new UploadBuffer<UINT>(m_device.Get(), triangleMeshData.m_vIndicies.data(), indexSize);
+
+
+		// for now, we will move this later
+		D3D12_VERTEX_BUFFER_VIEW vertexBuffer;
+		ZeroMemory(&vertexBuffer, sizeof(D3D12_VERTEX_BUFFER_VIEW));
+		vertexBuffer.BufferLocation = vertexBufferResource->GetAddress();
+		vertexBuffer.StrideInBytes = sizeof(Vertex);
+		vertexBuffer.SizeInBytes = vertexSize;
+
+		// for now, we will move this later
+		D3D12_INDEX_BUFFER_VIEW indexBuffer;
+		ZeroMemory(&indexBuffer, sizeof(D3D12_INDEX_BUFFER_VIEW));
+		indexBuffer.BufferLocation = indexBufferResource->GetAddress();
+		indexBuffer.SizeInBytes = indexSize;
+		indexBuffer.Format = DXGI_FORMAT_R32_UINT;
+
+		auto triangleMesh = std::make_unique<MeshGeometry>();
+		triangleMesh->Name = "triangle";
+		triangleMesh->VertexBufferGPU = vertexBuffer;
+		triangleMesh->IndexBufferGPU = indexBuffer;
+		triangleMesh->VertexCount = triangleMeshData.m_vVertices.size();
+		triangleMesh->IndexCount = triangleMeshData.m_vIndicies.size();
+
+		m_meshGeometryMap["triangle"] = std::move(triangleMesh);
 	}
+	
 	
 
 	// Create the scene graph first then create the CBV based on the number of descriptors we need
@@ -56,10 +70,14 @@ void D3D12Engine::CreateSceneGraph()
 	m_pSceneHierarchy = new SceneNode();
 	
 	auto* triangleA = new SceneNode(true, XMFLOAT3(-0.5f, 0.0f, 0.0f));
+	triangleA->SetMeshGeometry(m_meshGeometryMap["triangle"].get());
 	m_pSceneHierarchy->AddChild(triangleA);
 
 	auto* triangleB = new SceneNode(true, XMFLOAT3(+0.5f, 0.0f, 0.0f));
+	triangleB->SetMeshGeometry(m_meshGeometryMap["triangle"].get());
+
 	auto* triangleC = new SceneNode(true, XMFLOAT3(+0.0f, -0.25f, 0.0f));
+	triangleC->SetMeshGeometry(m_meshGeometryMap["triangle"].get());
 
 	triangleB->AddChild(triangleC);
 	
@@ -287,7 +305,6 @@ void D3D12Engine::OnRender()
 	m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	m_commandList->SetDescriptorHeaps(1, m_pCBVDescriptorHeap.GetAddressOf());
-	m_commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
 
 	m_pSceneHierarchy->Draw(m_commandList.Get());
 

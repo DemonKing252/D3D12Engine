@@ -1,7 +1,9 @@
 #pragma once
 #include <DirectXMath.h>
+#include <d3d12.h>
 #include <vector>
-using namespace std;
+#include <string>
+#include "UploadHeap.h"
 using namespace DirectX;
 
 struct Vertex
@@ -10,15 +12,26 @@ struct Vertex
 	XMFLOAT3 Color;
 };
 
-struct MeshGeometry
+struct GeometryData
 {
 	std::vector<Vertex> m_vVertices;
+	std::vector<UINT> m_vIndicies;
+};
+
+struct MeshGeometry
+{
+	std::string Name;
+	D3D12_VERTEX_BUFFER_VIEW VertexBufferGPU;
+	D3D12_INDEX_BUFFER_VIEW IndexBufferGPU;
+
+	UINT VertexCount;
+	UINT IndexCount;
 };
 
 class GeometryGenerator
 {
 public:
-	static MeshGeometry CreateTriangle();
+	static GeometryData CreateTriangle();
 
 };
 

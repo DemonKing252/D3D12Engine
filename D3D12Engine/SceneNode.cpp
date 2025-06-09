@@ -46,6 +46,11 @@ bool SceneNode::IsRenderable() const
 	return m_bIsRenderable;
 }
 
+void SceneNode::SetMeshGeometry(MeshGeometry* mesh)
+{
+	this->m_pMeshGeo = mesh;
+}
+
 void SceneNode::SetParent(SceneNode* parent)
 {
 	this->m_pParentNode = parent;
@@ -72,8 +77,10 @@ void SceneNode::Draw(ID3D12GraphicsCommandList* pCmdList)
 {
 	if (m_bIsRenderable)
 	{
-		pCmdList->SetGraphicsRootDescriptorTable(0, GPUDescriptorHandle);
-		pCmdList->DrawInstanced(3, 1, 0, 0);
+		pCmdList->IASetVertexBuffers(0, 1, &m_pMeshGeo->VertexBufferGPU);
+		pCmdList->IASetIndexBuffer(&m_pMeshGeo->IndexBufferGPU);
+		pCmdList->SetGraphicsRootDescriptorTable(0, GPUDescriptorHandle);		
+		pCmdList->DrawIndexedInstanced(m_pMeshGeo->IndexCount, 1, 0, 0, 0);
 	}
 		
 	for (auto& c : m_children)

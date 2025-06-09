@@ -3,6 +3,7 @@
 #include <vector>
 #include <d3d12.h>
 #include "d3dx12.h"
+#include "GeometryGenerator.h"
 using namespace std;
 using namespace DirectX;
 
@@ -15,6 +16,7 @@ private:
 	std::uint64_t m_iRenderableNodeIndex = 0;
 	std::vector<SceneNode*> m_children;
 	SceneNode* m_pParentNode;
+	MeshGeometry* m_pMeshGeo;
 public:
 	SceneNode(bool isRenderable, XMFLOAT3 Position = XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3 Scale = XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3 Rotation = XMFLOAT3(1.0f, 1.0f, 1.0f));
 	SceneNode();
@@ -30,6 +32,7 @@ public:
 	static std::uint64_t Instances();
 	bool IsRenderable() const;
 
+	void SetMeshGeometry(MeshGeometry* mesh);
 	void SetParent(SceneNode* parent);
 	void SetRenderableNodeIndex(const std::uint64_t index);
 	void SetGraphicsHandleToConstantBuffer(const CD3DX12_GPU_DESCRIPTOR_HANDLE handle);
