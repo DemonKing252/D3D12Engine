@@ -125,6 +125,7 @@
   <ItemGroup>
     <ClInclude Include="D3D12Engine.h" />
     <ClInclude Include="D3DApp.h" />
+    <ClInclude Include="d3dHelper.h" />
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="DDSTextureLoader.h" />
     <ClInclude Include="GeometryGenerator.h" />
@@ -135,6 +136,7 @@
   <ItemGroup>
     <ClCompile Include="D3D12Engine.cpp" />
     <ClCompile Include="D3DApp.cpp" />
+    <ClCompile Include="d3dHelper.cpp" />
     <ClCompile Include="DDSTextureLoader.cpp" />
     <ClCompile Include="GeometryGenerator.cpp" />
     <ClCompile Include="main.cpp" />

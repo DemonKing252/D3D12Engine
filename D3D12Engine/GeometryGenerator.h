@@ -16,6 +16,16 @@ struct GeometryData
 {
 	std::vector<Vertex> m_vVertices;
 	std::vector<UINT> m_vIndicies;
+	UINT VertexSizeInBytes;
+	UINT IndexSizeInBytes;
+};
+
+enum GeoAxis
+{
+	None,
+	X,
+	Y,
+	Z
 };
 
 struct MeshGeometry
@@ -31,7 +41,8 @@ struct MeshGeometry
 class GeometryGenerator
 {
 public:
-	static GeometryData CreateTriangle();
+	static GeometryData CreateTriangle(float width, float height);
+	static GeometryData CreateQuad(float width, float height);
 
 };
 

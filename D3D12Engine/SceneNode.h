@@ -4,9 +4,11 @@
 #include <d3d12.h>
 #include "d3dx12.h"
 #include "GeometryGenerator.h"
+#include "d3dHelper.h"
 using namespace std;
 using namespace DirectX;
 
+class D3D12Engine;
 class SceneNode
 {
 private:
@@ -17,6 +19,7 @@ private:
 	std::vector<SceneNode*> m_children;
 	SceneNode* m_pParentNode;
 	MeshGeometry* m_pMeshGeo;
+	Material* m_pMaterial;
 public:
 	SceneNode(bool isRenderable, XMFLOAT3 Position = XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3 Scale = XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3 Rotation = XMFLOAT3(1.0f, 1.0f, 1.0f));
 	SceneNode();
@@ -32,11 +35,14 @@ public:
 	static std::uint64_t Instances();
 	bool IsRenderable() const;
 
+	void SetMaterial(Material* mat);
 	void SetMeshGeometry(MeshGeometry* mesh);
 	void SetParent(SceneNode* parent);
 	void SetRenderableNodeIndex(const std::uint64_t index);
 	void SetGraphicsHandleToConstantBuffer(const CD3DX12_GPU_DESCRIPTOR_HANDLE handle);
 	void AddChild(SceneNode* rh);
+
+	void Update(D3D12Engine* d3dApp);
 	void Draw(ID3D12GraphicsCommandList* pCmdList);
 };
 

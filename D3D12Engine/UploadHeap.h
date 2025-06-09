@@ -17,9 +17,16 @@
 #pragma comment(lib, "d3d12.lib")
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
+
+struct MaterialConstant
+{
+	XMFLOAT4 DiffuseAlbedo;
+};
+
 struct PassConstants
 {
 	XMMATRIX World;
+	MaterialConstant Material;
 };
 
 template <class T>

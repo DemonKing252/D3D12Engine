@@ -1,68 +1,79 @@
 #include "D3D12Engine.h"
 #include "Win32App.h"
 
+D3D12Engine* D3D12Engine::s_pInstance = nullptr;
+
+std::shared_ptr<UploadBuffer<PassConstants>> D3D12Engine::GetConstantBuffer() const
+{
+	return m_pConstantBuffer;
+}
+PassConstants& D3D12Engine::GetPassConstants()
+{
+	return m_passConstants;
+}
+
 D3D12Engine::D3D12Engine(Win32App& win32App) : D3DApp(win32App)
 {
 	this->D3DApp::InitializeD3D();
 	this->D3DApp::BuildRenderTarget();
 	this->CompileShaders();
 	this->CreateGraphicsPipeline();
+	this->CreateMaterials();
 	this->CreateGeometry();
 	this->CreateSceneGraph();
 	this->BuildPassConstantResources();
 }
 
+void D3D12Engine::CreateMaterials()
+{
+	auto darkOliveGreen = std::make_unique<Material>();
+	darkOliveGreen->Name = "oliveGreen";
+	darkOliveGreen->DiffuseAlbedo = XMFLOAT4(0.6f, 1.0f, 0.2f, 1.000f);
+	m_materialMap[darkOliveGreen->Name] = std::move(darkOliveGreen);
+
+	auto cyan = std::make_unique<Material>();
+	cyan->Name = "cyan";
+	cyan->DiffuseAlbedo = XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f);
+	m_materialMap[cyan->Name] = std::move(cyan);
+
+	auto magenta = std::make_unique<Material>();
+	magenta->Name = "magenta";
+	magenta->DiffuseAlbedo = XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f);
+	m_materialMap[magenta->Name] = std::move(magenta);
+}
+
 void D3D12Engine::CreateGeometry()
 {
-	{
-		GeometryData triangleMeshData = GeometryGenerator::CreateTriangle();
-
-		const UINT vertexSize = sizeof(Vertex) * triangleMeshData.m_vVertices.size();
-		auto vertexBufferResource = new UploadBuffer<Vertex>(m_device.Get(), triangleMeshData.m_vVertices.data(), vertexSize);
-
-		const UINT indexSize = sizeof(UINT) * triangleMeshData.m_vIndicies.size();
-		auto indexBufferResource = new UploadBuffer<UINT>(m_device.Get(), triangleMeshData.m_vIndicies.data(), indexSize);
-
-
-		// for now, we will move this later
-		D3D12_VERTEX_BUFFER_VIEW vertexBuffer;
-		ZeroMemory(&vertexBuffer, sizeof(D3D12_VERTEX_BUFFER_VIEW));
-		vertexBuffer.BufferLocation = vertexBufferResource->GetAddress();
-		vertexBuffer.StrideInBytes = sizeof(Vertex);
-		vertexBuffer.SizeInBytes = vertexSize;
-
-		// for now, we will move this later
-		D3D12_INDEX_BUFFER_VIEW indexBuffer;
-		ZeroMemory(&indexBuffer, sizeof(D3D12_INDEX_BUFFER_VIEW));
-		indexBuffer.BufferLocation = indexBufferResource->GetAddress();
-		indexBuffer.SizeInBytes = indexSize;
-		indexBuffer.Format = DXGI_FORMAT_R32_UINT;
-
-		auto triangleMesh = std::make_unique<MeshGeometry>();
-		triangleMesh->Name = "triangle";
-		triangleMesh->VertexBufferGPU = vertexBuffer;
-		triangleMesh->IndexBufferGPU = indexBuffer;
-		triangleMesh->VertexCount = triangleMeshData.m_vVertices.size();
-		triangleMesh->IndexCount = triangleMeshData.m_vIndicies.size();
-
-		m_meshGeometryMap["triangle"] = std::move(triangleMesh);
-	}
+	// Triangle Mesh
+	GeometryData triangleMeshData = GeometryGenerator::CreateTriangle(0.25f, 0.25f);
 	
+	auto triangleVertexBufferResource = new UploadBuffer<Vertex>(m_device.Get(), triangleMeshData.m_vVertices.data(), triangleMeshData.VertexSizeInBytes);	
+	auto triangleIndexBufferResource = new UploadBuffer<UINT>(m_device.Get(), triangleMeshData.m_vIndicies.data(), triangleMeshData.IndexSizeInBytes);
 	
-
-	// Create the scene graph first then create the CBV based on the number of descriptors we need
-
-	// Liam's Notes:
-	// There's 3 different ways we could go about this:	 
-	/*
-		Option A (Current one) - Create 2 resources with the correct alignment requirements that the GPU requires, create a Descriptor heap of size 2 and offset to that resource
-		Option B - Create 1 resource of double the size of a SINGLE constant buffer (still following alignment requirements), and store each CB using an offset instead of 2 different resource, and continue using a descriptor heap of size 2
-		Option C - Use 2 parallel resources (without a constant buffer view descriptor) and set the accordingly using cmdList. Note that this requires you to modify the root signature parameters as well
-		Option D - (not efficent) - Use root constants which doesn't require a descriptor heap. However you are also resonsible for tracking each root location in the cbuffer. This becomes very messy with a bigger project.
-	*/
-
+	auto triangleMesh = std::make_unique<MeshGeometry>();
+	triangleMesh->Name = "triangle";
+	triangleMesh->VertexBufferGPU = d3dHelper::VertexBuffer<Vertex>(triangleVertexBufferResource, triangleMeshData.VertexSizeInBytes);
+	triangleMesh->IndexBufferGPU = d3dHelper::IndexBuffer<UINT>(triangleIndexBufferResource, triangleMeshData.IndexSizeInBytes);
+	triangleMesh->VertexCount = triangleMeshData.m_vVertices.size();
+	triangleMesh->IndexCount = triangleMeshData.m_vIndicies.size();
 	
+	m_meshGeometryMap["triangle"] = std::move(triangleMesh);
 
+	// Quad Mesh
+	GeometryData quadMeshData = GeometryGenerator::CreateQuad(0.25f, 0.25f);
+	
+	auto quadVertexBufferResource = new UploadBuffer<Vertex>(m_device.Get(), quadMeshData.m_vVertices.data(), quadMeshData.VertexSizeInBytes);
+	auto qudVertexBufferResource = new UploadBuffer<UINT>(m_device.Get(), quadMeshData.m_vIndicies.data(), quadMeshData.IndexSizeInBytes);
+	
+	auto quadMesh = std::make_unique<MeshGeometry>();
+	quadMesh->Name = "quad";
+	quadMesh->VertexBufferGPU = d3dHelper::VertexBuffer<Vertex>(quadVertexBufferResource, quadMeshData.VertexSizeInBytes);
+	quadMesh->IndexBufferGPU = d3dHelper::IndexBuffer<UINT>(qudVertexBufferResource, quadMeshData.IndexSizeInBytes);
+	quadMesh->VertexCount = quadMeshData.m_vVertices.size();
+	quadMesh->IndexCount = quadMeshData.m_vIndicies.size();
+	
+	m_meshGeometryMap["quad"] = std::move(quadMesh);
+	
 }
 
 void D3D12Engine::CreateSceneGraph()
@@ -71,39 +82,20 @@ void D3D12Engine::CreateSceneGraph()
 	
 	auto* triangleA = new SceneNode(true, XMFLOAT3(-0.5f, 0.0f, 0.0f));
 	triangleA->SetMeshGeometry(m_meshGeometryMap["triangle"].get());
+	triangleA->SetMaterial(m_materialMap["cyan"].get());
 	m_pSceneHierarchy->AddChild(triangleA);
 
 	auto* triangleB = new SceneNode(true, XMFLOAT3(+0.5f, 0.0f, 0.0f));
-	triangleB->SetMeshGeometry(m_meshGeometryMap["triangle"].get());
+	triangleB->SetMaterial(m_materialMap["oliveGreen"].get());
+	triangleB->SetMeshGeometry(m_meshGeometryMap["quad"].get());
 
-	auto* triangleC = new SceneNode(true, XMFLOAT3(+0.0f, -0.25f, 0.0f));
+	auto* triangleC = new SceneNode(true, XMFLOAT3(+0.0f, -0.5f, 0.0f));
+	triangleC->SetMaterial(m_materialMap["magenta"].get());
 	triangleC->SetMeshGeometry(m_meshGeometryMap["triangle"].get());
 
 	triangleB->AddChild(triangleC);
 	
 	m_pSceneHierarchy->AddChild(triangleB);
-	
-	char buffer[200];
-	sprintf_s(buffer, "Num Instances: %i\n", SceneNode::Instances());
-
-	OutputDebugStringA(buffer);
-	for (auto c : m_pSceneHierarchy->GetChildren())
-	{
-		char buffer[220];
-		sprintf_s(buffer, "[Child index: %i], [x: %f], [y: %f]\n", c->RenderableNodeIndex(), c->Position.x, c->Position.y);
-
-		OutputDebugStringA(buffer);
-
-		for (auto c_of_c : c->GetChildren())
-		{
-
-			sprintf_s(buffer, "[Child index: %i], [x: %f], [y: %f]\n", c_of_c->RenderableNodeIndex(), c_of_c->Position.x, c_of_c->Position.y);
-
-			OutputDebugStringA(buffer);
-		}
-	}
-
-	//OutputDebugStringA(buffer);
 }
 
 
@@ -198,14 +190,7 @@ void D3D12Engine::BuildPassConstantResources()
 	
 	ThrowIfFailed(m_device->CreateDescriptorHeap(&cbvDescHeap, IID_PPV_ARGS(m_pCBVDescriptorHeap.GetAddressOf())));
 
-
-	m_pConstantBuffer = std::make_unique<UploadBuffer<PassConstants>>(m_device.Get(), &m_passConstants, SceneNode::Instances() * 256U);
-
-	//m_passConstants.World = XMMatrixTranspose(XMMatrixTranslation(-0.5f, 0.0f, 0.0f));
-	//m_pConstantBuffer->CopyData(0, &m_passConstants);
-	//
-	//m_passConstants.World = XMMatrixTranspose(XMMatrixTranslation(+0.5f, 0.0f, 0.0f));
-	//m_pConstantBuffer->CopyData(1, &m_passConstants);
+	m_pConstantBuffer = std::make_shared<UploadBuffer<PassConstants>>(m_device.Get(), &m_passConstants, SceneNode::Instances() * 256U);
 
 	const UINT cbvDescriptorHandleIncrementSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	UINT drawableIndex = 0;
@@ -232,6 +217,7 @@ void D3D12Engine::BuildPassConstantResources()
 				c->Position.y,
 				c->Position.z
 			));
+		m_passConstants.Material.DiffuseAlbedo = XMFLOAT4(1.0f, 0.2f, 0.0f, 1.0f);
 
 		m_pConstantBuffer->CopyData(
 			drawableIndex,
@@ -256,25 +242,11 @@ void D3D12Engine::BuildPassConstantResources()
 			allocate_resource_memory(node_of_node);
 		}
 	}
-
-	for (auto c : m_pSceneHierarchy->GetChildren())
-	{
-		char buffer[220];
-		sprintf_s(buffer, "[Child index: %i], [x: %f], [y: %f]\n", c->RenderableNodeIndex(), c->Position.x, c->Position.y);
-
-		OutputDebugStringA(buffer);
-	}
-
-	int x = 1;
-
-	//CD3DX12_CPU_DESCRIPTOR_HANDLE cbvHandle(m_pCBVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), 1, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-	//
-	//cbvDesc.BufferLocation = m_pConstantBuffer->GetAddress(1);
-	//m_device->CreateConstantBufferView(&cbvDesc, cbvHandle);
 }
 
 void D3D12Engine::OnUpdate()
 {
+	m_pSceneHierarchy->Update(GetApp());
 }
 
 void D3D12Engine::OnRender()
@@ -307,14 +279,6 @@ void D3D12Engine::OnRender()
 	m_commandList->SetDescriptorHeaps(1, m_pCBVDescriptorHeap.GetAddressOf());
 
 	m_pSceneHierarchy->Draw(m_commandList.Get());
-
-	// next descriptor
-	//cbvGPUHandle.Offset(1, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-	//
-	//m_commandList->SetGraphicsRootDescriptorTable(0, cbvGPUHandle);
-	//
-	//// draw call #2
-	//m_commandList->DrawInstanced(3, 1, 0, 0);
 
 	// Indicate that the back buffer will be used to present
 	m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_rtvResources[m_iBackBufferIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
