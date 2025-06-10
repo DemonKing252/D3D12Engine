@@ -5,6 +5,7 @@
 #include "d3dHelper.h"
 #include <memory>
 #include <unordered_map>
+#include "Camera.h"
 class Win32App;
 class D3D12Engine : public D3DApp
 {
@@ -37,6 +38,8 @@ private:
 	
 	static D3D12Engine* s_pInstance;
 public:
+	std::unique_ptr<Camera> m_pCamera;
+
 	std::shared_ptr<UploadBuffer<PassConstants>> GetConstantBuffer() const;
 	static D3D12Engine* GetApp()
 	{
@@ -52,6 +55,7 @@ public:
 
 	PassConstants& GetPassConstants();
 
+	void Create3DCamera();
 	void CreateMaterials();
 	void CreateGeometry();
 	void CompileShaders();

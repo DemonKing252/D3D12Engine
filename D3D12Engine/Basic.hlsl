@@ -22,6 +22,7 @@ struct Material
 cbuffer PassConstants : register(b0)
 {
     float4x4 gWorld;
+    float4x4 gViewProj;
     Material gMaterial;
 }
 
@@ -29,7 +30,8 @@ VertexOut VSMain(VSVertexIn vIn)
 {
     // Just pass the position and color to the Pixel Shader, we aren't doing any transformations yet
     
-    float4 WorldP = mul(float4(vIn.pos, 1.0f), gWorld);
+    float4 ModelP = mul(float4(vIn.pos, 1.0f), gWorld);
+    float4 WorldP = mul(ModelP, gViewProj);
     
     VertexOut vOut;    
     

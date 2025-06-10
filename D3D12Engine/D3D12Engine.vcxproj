@@ -123,6 +123,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="D3D12Engine.h" />
     <ClInclude Include="D3DApp.h" />
     <ClInclude Include="d3dHelper.h" />
@@ -134,6 +135,7 @@
     <ClInclude Include="Win32App.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="D3D12Engine.cpp" />
     <ClCompile Include="D3DApp.cpp" />
     <ClCompile Include="d3dHelper.cpp" />

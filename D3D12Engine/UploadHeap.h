@@ -26,6 +26,7 @@ struct MaterialConstant
 struct PassConstants
 {
 	XMMATRIX World;
+	XMMATRIX ViewProj;
 	MaterialConstant Material;
 };
 

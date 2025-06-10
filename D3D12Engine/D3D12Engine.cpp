@@ -16,12 +16,20 @@ D3D12Engine::D3D12Engine(Win32App& win32App) : D3DApp(win32App)
 {
 	this->D3DApp::InitializeD3D();
 	this->D3DApp::BuildRenderTarget();
+	this->Create3DCamera();
 	this->CompileShaders();
 	this->CreateGraphicsPipeline();
 	this->CreateMaterials();
 	this->CreateGeometry();
 	this->CreateSceneGraph();
 	this->BuildPassConstantResources();
+}
+
+void D3D12Engine::Create3DCamera()
+{
+	m_pCamera = std::make_unique<Camera>(90.0f, 0.01f, 1000.0f, 1024.0f / 768.0f);
+	m_pCamera->SetLens(XMFLOAT3(0.0f, 0.0f, -2.0f), XMFLOAT3(0.0f, 0.0f, 0.0f));
+
 }
 
 void D3D12Engine::CreateMaterials()
@@ -246,6 +254,7 @@ void D3D12Engine::BuildPassConstantResources()
 
 void D3D12Engine::OnUpdate()
 {
+	m_passConstants.ViewProj = m_pCamera->GetViewProj();
 	m_pSceneHierarchy->Update(GetApp());
 }
 
