@@ -30,7 +30,7 @@
     <ClInclude Include="DDSTextureLoader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="UploadHeap.h">
+    <ClInclude Include="UploadBuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="GeometryGenerator.h">
@@ -62,7 +62,7 @@
     <ClCompile Include="DDSTextureLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="UploadHeap.cpp">
+    <ClCompile Include="UploadBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="GeometryGenerator.cpp">

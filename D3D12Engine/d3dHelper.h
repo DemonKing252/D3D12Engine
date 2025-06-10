@@ -1,7 +1,7 @@
 #pragma once
 #include <d3d12.h>
 #include <string>
-#include "UploadHeap.h"
+#include "UploadBuffer.h"
 #include <DirectXMath.h>
 class d3dHelper
 {

@@ -3,7 +3,7 @@
 #include <d3d12.h>
 #include <vector>
 #include <string>
-#include "UploadHeap.h"
+#include "UploadBuffer.h"
 using namespace DirectX;
 
 struct Vertex
@@ -43,6 +43,8 @@ class GeometryGenerator
 public:
 	static GeometryData CreateTriangle(float width, float height);
 	static GeometryData CreateQuad(float width, float height);
-
+	static GeometryData CreateBox(float width, float height, float depth);
+	static GeometryData CreatePyramid(float width, float height, float depth);
+	
 };
 
