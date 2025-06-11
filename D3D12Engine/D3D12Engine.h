@@ -24,6 +24,7 @@ private:
 	std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> m_meshGeometryMap;
 	std::unordered_map<std::string, std::unique_ptr<Material>> m_materialMap;
 	std::shared_ptr<UploadBuffer<PassConstants>> m_pConstantBuffer;
+
 	PassConstants m_passConstants;
 
 	SceneNode* m_pSceneHierarchy;
@@ -39,7 +40,6 @@ private:
 	static D3D12Engine* s_pInstance;
 public:
 	std::unique_ptr<Camera> m_pCamera;
-
 	std::shared_ptr<UploadBuffer<PassConstants>> GetConstantBuffer() const;
 	static D3D12Engine* GetApp()
 	{

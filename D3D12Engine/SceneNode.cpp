@@ -85,7 +85,7 @@ void SceneNode::Update(D3D12Engine* d3dApp)
 	if (m_pMaterial != nullptr)
 		d3dApp->GetPassConstants().Material.DiffuseAlbedo = m_pMaterial->DiffuseAlbedo;
 	
-	d3dApp->GetPassConstants().World = XMMatrixTranspose(XMMatrixTranslation(Position.x, Position.y, Position.z));
+	d3dApp->GetPassConstants().World = XMMatrixTranspose(XMMatrixTranslation(Position.x, Position.y, Position.z));	
 	d3dApp->GetConstantBuffer()->CopyData(m_iRenderableNodeIndex, &d3dApp->GetPassConstants());
 
 	for (auto& c : m_children)

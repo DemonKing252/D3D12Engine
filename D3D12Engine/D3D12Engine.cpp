@@ -60,8 +60,8 @@ void D3D12Engine::CreateGeometry()
 	// Triangle Mesh
 	auto triangleMeshData = GeometryGenerator::CreateTriangle(0.25f, 0.25f);
 	
-	auto triangleVertexBufferResource = new UploadBuffer<Vertex>(m_device.Get(), triangleMeshData.m_vVertices.data(), triangleMeshData.VertexSizeInBytes);
-	auto triangleIndexBufferResource = new UploadBuffer<UINT>(m_device.Get(), triangleMeshData.m_vIndicies.data(), triangleMeshData.IndexSizeInBytes);
+	auto triangleVertexBufferResource = new UploadBuffer<Vertex>(m_device.Get(), triangleMeshData.m_vVertices.data(), triangleMeshData.VertexSizeInBytes, triangleMeshData.VertexSizeInBytes);
+	auto triangleIndexBufferResource = new UploadBuffer<UINT>(m_device.Get(), triangleMeshData.m_vIndicies.data(), triangleMeshData.IndexSizeInBytes, triangleMeshData.IndexSizeInBytes);
 	
 	auto triangleMeshGeo = std::make_unique<MeshGeometry>();
 	triangleMeshGeo->Name = "triangle";
@@ -73,15 +73,15 @@ void D3D12Engine::CreateGeometry()
 	m_meshGeometryMap[triangleMeshGeo->Name] = std::move(triangleMeshGeo);
 
 	// Quad Mesh
-	auto quadMeshData = GeometryGenerator::CreateQuad(3.0f, 3.0f);
+	auto quadMeshData = GeometryGenerator::CreateQuad(4.0f, 3.0f);
 	
-	auto quadVertexBufferResource = new UploadBuffer<Vertex>(m_device.Get(), quadMeshData.m_vVertices.data(), quadMeshData.VertexSizeInBytes);
-	auto qudVertexBufferResource = new UploadBuffer<UINT>(m_device.Get(), quadMeshData.m_vIndicies.data(), quadMeshData.IndexSizeInBytes);
+	auto quadVertexBufferResource = new UploadBuffer<Vertex>(m_device.Get(), quadMeshData.m_vVertices.data(), quadMeshData.VertexSizeInBytes, quadMeshData.VertexSizeInBytes);
+	auto quadIndexBufferResource = new UploadBuffer<UINT>(m_device.Get(), quadMeshData.m_vIndicies.data(), quadMeshData.IndexSizeInBytes, quadMeshData.IndexSizeInBytes);
 	
 	auto quadMeshGeo = std::make_unique<MeshGeometry>();
 	quadMeshGeo->Name = "quad";
 	quadMeshGeo->VertexBufferGPU = d3dHelper::VertexBuffer<Vertex>(quadVertexBufferResource, quadMeshData.VertexSizeInBytes);
-	quadMeshGeo->IndexBufferGPU = d3dHelper::IndexBuffer<UINT>(qudVertexBufferResource, quadMeshData.IndexSizeInBytes);
+	quadMeshGeo->IndexBufferGPU = d3dHelper::IndexBuffer<UINT>(quadIndexBufferResource, quadMeshData.IndexSizeInBytes);
 	quadMeshGeo->VertexCount = quadMeshData.m_vVertices.size();
 	quadMeshGeo->IndexCount = quadMeshData.m_vIndicies.size();
 	
@@ -90,8 +90,8 @@ void D3D12Engine::CreateGeometry()
 	// Create Box
 	auto boxMeshData = GeometryGenerator::CreateBox(0.5f, 0.5f, 0.5f);
 
-	auto boxVertexBufferResource = new UploadBuffer<Vertex>(m_device.Get(), boxMeshData.m_vVertices.data(), boxMeshData.VertexSizeInBytes);
-	auto boxIndexBufferResource = new UploadBuffer<UINT>(m_device.Get(), boxMeshData.m_vIndicies.data(), boxMeshData.IndexSizeInBytes);
+	auto boxVertexBufferResource = new UploadBuffer<Vertex>(m_device.Get(), boxMeshData.m_vVertices.data(), boxMeshData.VertexSizeInBytes, boxMeshData.VertexSizeInBytes);
+	auto boxIndexBufferResource = new UploadBuffer<UINT>(m_device.Get(), boxMeshData.m_vIndicies.data(), boxMeshData.IndexSizeInBytes, boxMeshData.IndexSizeInBytes);
 
 	auto boxMeshGeo = std::make_unique<MeshGeometry>();
 	boxMeshGeo->Name = "box";
@@ -105,8 +105,8 @@ void D3D12Engine::CreateGeometry()
 	// Create Pyramid
 	auto pyramidMeshData = GeometryGenerator::CreatePyramid(0.5f, 0.5f, 0.5f);
 
-	auto pyramidVertexBufferResource = new UploadBuffer<Vertex>(m_device.Get(), pyramidMeshData.m_vVertices.data(), pyramidMeshData.VertexSizeInBytes);
-	auto pyramidIndexBufferResource = new UploadBuffer<UINT>(m_device.Get(), pyramidMeshData.m_vIndicies.data(), pyramidMeshData.IndexSizeInBytes);
+	auto pyramidVertexBufferResource = new UploadBuffer<Vertex>(m_device.Get(), pyramidMeshData.m_vVertices.data(), pyramidMeshData.VertexSizeInBytes, pyramidMeshData.VertexSizeInBytes);
+	auto pyramidIndexBufferResource = new UploadBuffer<UINT>(m_device.Get(), pyramidMeshData.m_vIndicies.data(), pyramidMeshData.IndexSizeInBytes, pyramidMeshData.IndexSizeInBytes);
 
 	auto pyramidMeshGeo = std::make_unique<MeshGeometry>();
 	pyramidMeshGeo->Name = "pyramid";
@@ -127,58 +127,39 @@ void D3D12Engine::CreateSceneGraph()
 	quad->SetMaterial(m_materialMap["white"].get());
 	m_pSceneHierarchy->AddChild(quad);
 
-	//auto* quad2 = new SceneNode(true, XMFLOAT3(4.0f, -0.5f, 0.0f));
-	//quad2->SetMeshGeometry(m_meshGeometryMap["quad"].get());
-	//quad2->SetMaterial(m_materialMap["white"].get());
-	//m_pSceneHierarchy->AddChild(quad2);
-
-	//auto* box1 = new SceneNode(true, XMFLOAT3(+1.5f, 2.0f, -2.0f));
-	//box1->SetMeshGeometry(m_meshGeometryMap["box"].get());
-	//box1->SetMaterial(m_materialMap["white"].get());
-	//m_pSceneHierarchy->AddChild(box1);
-
-
 	auto* box1 = new SceneNode(true, XMFLOAT3(2.0f, 0.0f, 0.0f));
 	box1->SetMeshGeometry(m_meshGeometryMap["box"].get());
 	box1->SetMaterial(m_materialMap["white"].get());
 	m_pSceneHierarchy->AddChild(box1);
 	
-	//auto* box2 = new SceneNode(true, XMFLOAT3(-2.0f, 0.0f, 0.0f));
-	//box2->SetMeshGeometry(m_meshGeometryMap["box"].get());
-	//box2->SetMaterial(m_materialMap["white"].get());
-	//m_pSceneHierarchy->AddChild(box2);
+	auto* box2 = new SceneNode(true, XMFLOAT3(-2.0f, 0.0f, 0.0f));
+	box2->SetMeshGeometry(m_meshGeometryMap["box"].get());
+	box2->SetMaterial(m_materialMap["white"].get());
+	m_pSceneHierarchy->AddChild(box2);
 
-	auto* pyramid1 = new SceneNode(true, XMFLOAT3(0.0f, 0.0f, 2.0f));
-	pyramid1->SetMeshGeometry(m_meshGeometryMap["pyramid"].get());
-	pyramid1->SetMaterial(m_materialMap["white"].get());
-	m_pSceneHierarchy->AddChild(pyramid1);
+	XMFLOAT3 Pyramid_Translations[] = {
+		XMFLOAT3(+0.0f, 0.0f, +2.0f),
+		XMFLOAT3(-1.5f, 0.0f, +2.0f),
+		XMFLOAT3(+1.5f, 0.0f, +2.0f),
+		XMFLOAT3(-3.0f, 0.0f, +2.0f),
+		XMFLOAT3(+3.0f, 0.0f, +2.0f),
 
-	auto* pyramid2 = new SceneNode(true, XMFLOAT3(-1.5f, 0.0f, 2.0f));
-	pyramid2->SetMeshGeometry(m_meshGeometryMap["pyramid"].get());
-	pyramid2->SetMaterial(m_materialMap["white"].get());
-	m_pSceneHierarchy->AddChild(pyramid2);
+		XMFLOAT3(+0.0f, 0.0f, -2.0f),
+		XMFLOAT3(-1.5f, 0.0f, -2.0f),
+		XMFLOAT3(+1.5f, 0.0f, -2.0f),
+		XMFLOAT3(-3.0f, 0.0f, -2.0f),
+		XMFLOAT3(+3.0f, 0.0f, -2.0f),
 
-	auto* pyramid3 = new SceneNode(true, XMFLOAT3(+1.5f, 0.0f, 2.0f));
-	pyramid3->SetMeshGeometry(m_meshGeometryMap["pyramid"].get());
-	pyramid3->SetMaterial(m_materialMap["white"].get());
-	m_pSceneHierarchy->AddChild(pyramid3);
+	};
 
-
-	auto* pyramid4 = new SceneNode(true, XMFLOAT3(0.0f, 0.0f, -2.0f));
-	pyramid4->SetMeshGeometry(m_meshGeometryMap["pyramid"].get());
-	pyramid4->SetMaterial(m_materialMap["white"].get());
-	m_pSceneHierarchy->AddChild(pyramid4);
-
-	auto* pyramid5 = new SceneNode(true, XMFLOAT3(-1.5f, 0.0f, -2.0f));
-	pyramid5->SetMeshGeometry(m_meshGeometryMap["pyramid"].get());
-	pyramid5->SetMaterial(m_materialMap["white"].get());
-	m_pSceneHierarchy->AddChild(pyramid5);
-
-	auto* pyramid6 = new SceneNode(true, XMFLOAT3(+1.5f, 0.0f, -2.0f));
-	pyramid6->SetMeshGeometry(m_meshGeometryMap["pyramid"].get());
-	pyramid6->SetMaterial(m_materialMap["white"].get());
-	m_pSceneHierarchy->AddChild(pyramid6);
-
+	for (UINT pyramidIndex = 0; pyramidIndex < _countof(Pyramid_Translations); pyramidIndex++)
+	{
+		auto* pyramid = new SceneNode(true, Pyramid_Translations[pyramidIndex]);
+		pyramid->SetMeshGeometry(m_meshGeometryMap["pyramid"].get());
+		pyramid->SetMaterial(m_materialMap["white"].get());
+		m_pSceneHierarchy->AddChild(pyramid);
+	}
+	
 	char buffer[50];
 	sprintf_s(buffer, "Num Render Items: %i\n", SceneNode::Instances());
 	OutputDebugStringA(buffer);
@@ -276,7 +257,8 @@ void D3D12Engine::BuildPassConstantResources()
 	
 	ThrowIfFailed(m_device->CreateDescriptorHeap(&cbvDescHeap, IID_PPV_ARGS(m_pCBVDescriptorHeap.GetAddressOf())));
 
-	m_pConstantBuffer = std::make_shared<UploadBuffer<PassConstants>>(m_device.Get(), &m_passConstants, SceneNode::Instances() * 256U);
+	m_pConstantBuffer = std::make_shared<UploadBuffer<PassConstants>>(m_device.Get(), &m_passConstants, sizeof(m_passConstants), SceneNode::Instances() * 256U);
+
 
 	const UINT cbvDescriptorHandleIncrementSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	UINT drawableIndex = 0;
@@ -309,6 +291,7 @@ void D3D12Engine::BuildPassConstantResources()
 			drawableIndex,
 			&m_passConstants
 		);
+
 		c->SetRenderableNodeIndex(drawableIndex);
 
 		c->SetGraphicsHandleToConstantBuffer(sceneNodeGPUHandle);
@@ -361,7 +344,9 @@ void D3D12Engine::OnRender()
 
 	m_commandList->RSSetScissorRects(1, &m_rScissorsRect);
 	m_commandList->RSSetViewports(1, &m_vViewPort);
+	
 	m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	//m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINESTRIP);
 
 	m_commandList->SetDescriptorHeaps(1, m_pCBVDescriptorHeap.GetAddressOf());
 

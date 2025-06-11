@@ -18,6 +18,30 @@
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
 
+inline std::string HRResultToString(HRESULT hr)
+{
+	_com_error err(hr);
+	const wchar_t* wideMsg = err.ErrorMessage();
+
+	// Convert to std::string (narrow) from wide
+	char narrowMsg[512];
+	size_t converted = 0;
+	wcstombs_s(&converted, narrowMsg, wideMsg, _TRUNCATE);
+
+	return std::string(narrowMsg);
+}
+
+#ifndef ThrowIfFailed
+#define ThrowIfFailed(hrCall)                                      \
+    {                                                              \
+        HRESULT _hr = (hrCall);                                    \
+        if (FAILED(_hr))                                           \
+        {                                                          \
+            throw std::runtime_error(HRResultToString(_hr).c_str());\
+        }                                                          \
+    }
+#endif
+
 struct MaterialConstant
 {
 	XMFLOAT4 DiffuseAlbedo;
@@ -34,26 +58,26 @@ template <class T>
 class UploadBuffer
 {
 public:
-	UploadBuffer(ID3D12Device* device, T* data, size_t size);
+	UploadBuffer(ID3D12Device* device, T* data, const size_t& strideSize, const size_t& bufferSize);
 
-	D3D12_GPU_VIRTUAL_ADDRESS GetAddress(const UINT offsetInDescriptorHeap = 0) const;
+	D3D12_GPU_VIRTUAL_ADDRESS GetAddress(const UINT& offsetInDescriptorHeap = 0) const;
 	ComPtr<ID3D12Resource> GetBuffer() const;
-	void CopyData(const UINT offsetInDescriptorHeap, T* data);
+	void CopyData(const UINT& offsetInDescriptorHeap, T* data);
 	
 private:
-	size_t m_size;
+	size_t m_iStrideSize;
 	void* m_pBytes;
 	ComPtr<ID3D12Resource> m_pUploadBuffer;
 };
 
 template<class T>
-UploadBuffer<T>::UploadBuffer(ID3D12Device* d3dDevice, T* data, size_t size)
+UploadBuffer<T>::UploadBuffer(ID3D12Device* device, T* data, const size_t& strideSize, const size_t& bufferSize)
 {
-	this->m_size = size;
-	ThrowIfFailed(d3dDevice->CreateCommittedResource(
+	this->m_iStrideSize = strideSize;
+	ThrowIfFailed(device->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
 		D3D12_HEAP_FLAG_NONE,
-		&CD3DX12_RESOURCE_DESC::Buffer(size),
+		&CD3DX12_RESOURCE_DESC::Buffer(bufferSize),
 		D3D12_RESOURCE_STATE_COMMON,
 		nullptr,
 		IID_PPV_ARGS(&m_pUploadBuffer))
@@ -62,13 +86,13 @@ UploadBuffer<T>::UploadBuffer(ID3D12Device* d3dDevice, T* data, size_t size)
 	ThrowIfFailed(m_pUploadBuffer->Map(0, nullptr, &m_pBytes));
 	CopyMemory(
 		reinterpret_cast<UINT8*>(m_pBytes), 
-		data, 
-		size
+		data,
+		m_iStrideSize
 	);
 	m_pUploadBuffer->Unmap(0, nullptr);
 }
 template<class T>
-D3D12_GPU_VIRTUAL_ADDRESS UploadBuffer<T>::GetAddress(const UINT offsetInDescriptorHeap) const
+D3D12_GPU_VIRTUAL_ADDRESS UploadBuffer<T>::GetAddress(const UINT& offsetInDescriptorHeap) const
 {
 	return m_pUploadBuffer->GetGPUVirtualAddress() + offsetInDescriptorHeap * 256U;
 }
@@ -80,11 +104,11 @@ ComPtr<ID3D12Resource> UploadBuffer<T>::GetBuffer() const
 }
 
 template<class T>
-void UploadBuffer<T>::CopyData(const UINT offsetInDescriptorHeap, T* data)
+void UploadBuffer<T>::CopyData(const UINT& offsetInDescriptorHeap, T* data)
 {
 	CopyMemory(
 		reinterpret_cast<UINT8*>(m_pBytes) + offsetInDescriptorHeap * 256U, 
 		data, 
-		m_size
+		m_iStrideSize
 	);
 }
