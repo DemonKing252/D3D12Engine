@@ -27,6 +27,8 @@ public:
 	float m_fPhi;
 	float m_fTheta;
 	float m_fRadius;
+
+	bool m_bWireFrameEnabled;
 private:
 	static Win32App* s_pInstance;
 	

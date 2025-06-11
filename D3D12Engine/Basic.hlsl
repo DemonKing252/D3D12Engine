@@ -19,11 +19,14 @@ struct Material
     float4 DiffuseAlbedo;
 };
 
-cbuffer PassConstants : register(b0)
+cbuffer ObjectPassConstants : register(b0)  // Per Object
 {
     float4x4 gWorld;
-    float4x4 gViewProj;
     Material gMaterial;
+}
+cbuffer FramePassConstants : register(b1) // Per Frame
+{
+    float4x4 gViewProj;
 }
 
 VertexOut VSMain(VSVertexIn vIn)
@@ -44,5 +47,5 @@ VertexOut VSMain(VSVertexIn vIn)
 float4 PSMain(PSVertexIn vIn) : SV_Target
 {
     // Return the color that was recieved
-    return float4(vIn.col * gMaterial.DiffuseAlbedo.xyz, 1.0f);
+    return float4(gMaterial.DiffuseAlbedo.xyz, 1.0f);
 }

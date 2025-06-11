@@ -3,13 +3,13 @@
 
 D3D12Engine* D3D12Engine::s_pInstance = nullptr;
 
-std::shared_ptr<UploadBuffer<PassConstants>> D3D12Engine::GetConstantBuffer() const
+std::shared_ptr<UploadBuffer<ObjectPassConstants>> D3D12Engine::GetConstantBuffer() const
 {
-	return m_pConstantBuffer;
+	return m_pObjectConstants;
 }
-PassConstants& D3D12Engine::GetPassConstants()
+ObjectPassConstants& D3D12Engine::GetPassConstants()
 {
-	return m_passConstants;
+	return m_objPassConstants;
 }
 
 D3D12Engine::D3D12Engine(Win32App& win32App) : D3DApp(win32App)
@@ -34,10 +34,10 @@ void D3D12Engine::Create3DCamera()
 
 void D3D12Engine::CreateMaterials()
 {
-	auto darkOliveGreen = std::make_unique<Material>();
-	darkOliveGreen->Name = "oliveGreen";
-	darkOliveGreen->DiffuseAlbedo = XMFLOAT4(0.6f, 1.0f, 0.2f, 1.000f);
-	m_materialMap[darkOliveGreen->Name] = std::move(darkOliveGreen);
+	auto oliveGreen = std::make_unique<Material>();
+	oliveGreen->Name = "oliveGreen";
+	oliveGreen->DiffuseAlbedo = XMFLOAT4(0.6f, 1.0f, 0.2f, 1.000f);
+	m_materialMap[oliveGreen->Name] = std::move(oliveGreen);
 
 	auto cyan = std::make_unique<Material>();
 	cyan->Name = "cyan";
@@ -53,6 +53,16 @@ void D3D12Engine::CreateMaterials()
 	white->Name = "white";
 	white->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	m_materialMap[white->Name] = std::move(white);
+
+	auto teal = std::make_unique<Material>();
+	teal->Name = "teal";
+	teal->DiffuseAlbedo = XMFLOAT4(0.0f, 0.502f, 0.502f, 1.0f);
+	m_materialMap[teal->Name] = std::move(teal);
+
+	auto orange = std::make_unique<Material>();
+	orange->Name = "orange";
+	orange->DiffuseAlbedo = XMFLOAT4(1.0f, 0.647f, 0.0f, 1.0f);
+	m_materialMap[orange->Name] = std::move(orange);
 }
 
 void D3D12Engine::CreateGeometry()
@@ -124,17 +134,17 @@ void D3D12Engine::CreateSceneGraph()
 
 	auto* quad = new SceneNode(true, XMFLOAT3(0.0f, -0.5f, 0.0f));
 	quad->SetMeshGeometry(m_meshGeometryMap["quad"].get());
-	quad->SetMaterial(m_materialMap["white"].get());
+	quad->SetMaterial(m_materialMap["magenta"].get());
 	m_pSceneHierarchy->AddChild(quad);
 
 	auto* box1 = new SceneNode(true, XMFLOAT3(2.0f, 0.0f, 0.0f));
 	box1->SetMeshGeometry(m_meshGeometryMap["box"].get());
-	box1->SetMaterial(m_materialMap["white"].get());
+	box1->SetMaterial(m_materialMap["cyan"].get());
 	m_pSceneHierarchy->AddChild(box1);
 	
 	auto* box2 = new SceneNode(true, XMFLOAT3(-2.0f, 0.0f, 0.0f));
 	box2->SetMeshGeometry(m_meshGeometryMap["box"].get());
-	box2->SetMaterial(m_materialMap["white"].get());
+	box2->SetMaterial(m_materialMap["cyan"].get());
 	m_pSceneHierarchy->AddChild(box2);
 
 	XMFLOAT3 Pyramid_Translations[] = {
@@ -156,7 +166,9 @@ void D3D12Engine::CreateSceneGraph()
 	{
 		auto* pyramid = new SceneNode(true, Pyramid_Translations[pyramidIndex]);
 		pyramid->SetMeshGeometry(m_meshGeometryMap["pyramid"].get());
-		pyramid->SetMaterial(m_materialMap["white"].get());
+
+		// Because why not
+		pyramid->SetMaterial(pyramidIndex < 5 ? m_materialMap["teal"].get() : m_materialMap["orange"].get());
 		m_pSceneHierarchy->AddChild(pyramid);
 	}
 	
@@ -191,11 +203,15 @@ void D3D12Engine::CreateGraphicsPipeline()
 	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
 	ZeroMemory(&rootSignatureDesc, sizeof(CD3DX12_ROOT_SIGNATURE_DESC));
 
-	CD3DX12_DESCRIPTOR_RANGE cbvRange;
-	cbvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);// last arg is base register --> cbuffer : register(b0)
+	CD3DX12_DESCRIPTOR_RANGE cbvObjDescRange;
+	cbvObjDescRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);// last arg is base register --> cbuffer : register(b0)
+	
+	CD3DX12_DESCRIPTOR_RANGE cbvFrameDescRange;
+	cbvFrameDescRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);// last arg is base register --> cbuffer : register(b1)
 
-	CD3DX12_ROOT_PARAMETER rootParams[1];
-	rootParams[0].InitAsDescriptorTable(1, &cbvRange, D3D12_SHADER_VISIBILITY_ALL);
+	CD3DX12_ROOT_PARAMETER rootParams[2];
+	rootParams[0].InitAsDescriptorTable(1, &cbvObjDescRange, D3D12_SHADER_VISIBILITY_ALL);
+	rootParams[1].InitAsDescriptorTable(1, &cbvFrameDescRange, D3D12_SHADER_VISIBILITY_ALL);
 	//rootParams[0].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_ALL);
 
 	// Empty for now, we don't have any SRVs or CBVs
@@ -229,8 +245,11 @@ void D3D12Engine::CreateGraphicsPipeline()
 	defaultPSODesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 	defaultPSODesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
-	ThrowIfFailed(m_device->CreateGraphicsPipelineState(&defaultPSODesc, IID_PPV_ARGS(&m_defaultPipeline)));
+	ThrowIfFailed(m_device->CreateGraphicsPipelineState(&defaultPSODesc, IID_PPV_ARGS(&m_pOpaquePSO)));
 
+	defaultPSODesc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
+	
+	ThrowIfFailed(m_device->CreateGraphicsPipelineState(&defaultPSODesc, IID_PPV_ARGS(&m_pWireFramePSO)));
 
 	ZeroMemory(&m_rScissorsRect, sizeof(D3D12_RECT));
 	m_rScissorsRect.top = 0; 
@@ -251,24 +270,37 @@ void D3D12Engine::BuildPassConstantResources()
 	D3D12_DESCRIPTOR_HEAP_DESC cbvDescHeap;
 	ZeroMemory(&cbvDescHeap, sizeof(D3D12_DESCRIPTOR_HEAP_DESC));
 
-	cbvDescHeap.NumDescriptors = SceneNode::Instances();
+	cbvDescHeap.NumDescriptors = SceneNode::Instances() + 1;
 	cbvDescHeap.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	cbvDescHeap.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	
 	ThrowIfFailed(m_device->CreateDescriptorHeap(&cbvDescHeap, IID_PPV_ARGS(m_pCBVDescriptorHeap.GetAddressOf())));
 
-	m_pConstantBuffer = std::make_shared<UploadBuffer<PassConstants>>(m_device.Get(), &m_passConstants, sizeof(m_passConstants), SceneNode::Instances() * 256U);
+	m_pFrameConstants = std::make_shared<UploadBuffer<FramePassConstants>>(m_device.Get(), &m_frameConstants, sizeof(m_frameConstants), 256U);
 
+	D3D12_CONSTANT_BUFFER_VIEW_DESC frameCBVDesc;
+	ZeroMemory(&frameCBVDesc, sizeof(D3D12_CONSTANT_BUFFER_VIEW_DESC));
+
+	frameCBVDesc.BufferLocation = m_pFrameConstants->GetAddress(0);
+	frameCBVDesc.SizeInBytes = 256U;	// aligned to match CBV requirements
+
+	m_device->CreateConstantBufferView(&frameCBVDesc, m_pCBVDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+	
+	// Init camera
+	m_frameConstants.ViewProj = m_pCamera->GetViewProj();
+	m_pFrameConstants->CopyData(0, &m_frameConstants);
+	
+	m_pObjectConstants = std::make_shared<UploadBuffer<ObjectPassConstants>>(m_device.Get(), &m_objPassConstants, sizeof(m_objPassConstants), (1 + SceneNode::Instances()) * 256U);
 
 	const UINT cbvDescriptorHandleIncrementSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	UINT drawableIndex = 0;
+	UINT drawableIndex = 1;
 
 	auto allocate_resource_memory = [this, &drawableIndex, &cbvDescriptorHandleIncrementSize] (SceneNode* c)
 	{
 		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
 		ZeroMemory(&cbvDesc, sizeof(D3D12_CONSTANT_BUFFER_VIEW_DESC));
 
-		cbvDesc.BufferLocation = m_pConstantBuffer->GetAddress(drawableIndex);
+		cbvDesc.BufferLocation = m_pObjectConstants->GetAddress(drawableIndex);
 		cbvDesc.SizeInBytes = 256U;
 
 		CD3DX12_CPU_DESCRIPTOR_HANDLE sceneNodeCPUHandle(m_pCBVDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
@@ -279,17 +311,17 @@ void D3D12Engine::BuildPassConstantResources()
 
 		m_device->CreateConstantBufferView(&cbvDesc, sceneNodeCPUHandle);
 
-		m_passConstants.World = XMMatrixTranspose(
+		m_objPassConstants.World = XMMatrixTranspose(
 			XMMatrixTranslation(
 				c->Position.x,
 				c->Position.y,
 				c->Position.z
 			));
-		m_passConstants.Material.DiffuseAlbedo = XMFLOAT4(1.0f, 0.2f, 0.0f, 1.0f);
+		m_objPassConstants.Material.DiffuseAlbedo = XMFLOAT4(1.0f, 0.2f, 0.0f, 1.0f);
 
-		m_pConstantBuffer->CopyData(
+		m_pObjectConstants->CopyData(
 			drawableIndex,
-			&m_passConstants
+			&m_objPassConstants
 		);
 
 		c->SetRenderableNodeIndex(drawableIndex);
@@ -315,7 +347,9 @@ void D3D12Engine::BuildPassConstantResources()
 
 void D3D12Engine::OnUpdate()
 {
-	m_passConstants.ViewProj = m_pCamera->GetViewProj();
+	m_frameConstants.ViewProj = m_pCamera->GetViewProj();
+	m_pFrameConstants->CopyData(0, &m_frameConstants);
+
 	m_pSceneHierarchy->Update(GetApp());
 }
 
@@ -339,16 +373,21 @@ void D3D12Engine::OnRender()
 	float clear_color[] = { 0.0f, 0.2f, 0.4f, 1.0f };
 	m_commandList->ClearRenderTargetView(currentRTVHandle, clear_color, 0, 0);
 
-	m_commandList->SetPipelineState(m_defaultPipeline.Get());
+	m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	if (!Win32App::GetWinApp()->m_bWireFrameEnabled)
+		m_commandList->SetPipelineState(m_pWireFramePSO.Get());
+	else
+		m_commandList->SetPipelineState(m_pOpaquePSO.Get());
+
 	m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
 
 	m_commandList->RSSetScissorRects(1, &m_rScissorsRect);
 	m_commandList->RSSetViewports(1, &m_vViewPort);
 	
-	m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	//m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINESTRIP);
-
 	m_commandList->SetDescriptorHeaps(1, m_pCBVDescriptorHeap.GetAddressOf());
+
+	m_commandList->SetGraphicsRootDescriptorTable(1, m_pCBVDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 
 	m_pSceneHierarchy->Draw(m_commandList.Get());
 

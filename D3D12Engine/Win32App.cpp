@@ -6,7 +6,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 Win32App* Win32App::s_pInstance = nullptr;
 
 Win32App::Win32App(HINSTANCE hInst, int nCmdShow, const wchar_t* title, int x, int y, int w, int h) 
-	: m_bLMouseButtonDown(false), m_bRMouseButtonDown(false), m_iCurrMouseX(0), m_iCurrMouseY(0), m_iLastMouseX(0), m_iLastMouseY(0), m_fPhi(-90.0f), m_fTheta(0.0f), m_fRadius(2.0f)
+	: m_bLMouseButtonDown(false), m_bRMouseButtonDown(false), m_iCurrMouseX(0), m_iCurrMouseY(0), m_iLastMouseX(0), m_iLastMouseY(0), m_fPhi(-90.0f), m_fTheta(0.0f), m_fRadius(2.0f), m_bWireFrameEnabled(true)
 {
 	this->RegisterWin32Class(hInst);
 	this->CreateWin32Window(title, x, y, w, h, nCmdShow);
@@ -113,7 +113,11 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			PostQuitMessage(EXIT_SUCCESS);
 			return 0;
 			break;
+		case '1':
+			winApp->m_bWireFrameEnabled = winApp->m_bWireFrameEnabled ? false : true;
+			break;
 		}
+		break;
 	case WM_MOUSEMOVE:
 
 		if (winApp->GetLMouseDown())

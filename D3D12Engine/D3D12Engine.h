@@ -19,13 +19,17 @@ private:
 	ComPtr<ID3DBlob> signature;
 
 	ComPtr<ID3D12RootSignature> m_rootSignature;
-	ComPtr<ID3D12PipelineState> m_defaultPipeline;
+
+	ComPtr<ID3D12PipelineState> m_pOpaquePSO;
+	ComPtr<ID3D12PipelineState> m_pWireFramePSO;
 
 	std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> m_meshGeometryMap;
 	std::unordered_map<std::string, std::unique_ptr<Material>> m_materialMap;
-	std::shared_ptr<UploadBuffer<PassConstants>> m_pConstantBuffer;
+	std::shared_ptr<UploadBuffer<ObjectPassConstants>> m_pObjectConstants;
+	std::shared_ptr<UploadBuffer<FramePassConstants>> m_pFrameConstants;
 
-	PassConstants m_passConstants;
+	ObjectPassConstants m_objPassConstants;
+	FramePassConstants m_frameConstants;
 
 	SceneNode* m_pSceneHierarchy;
 	
@@ -40,7 +44,7 @@ private:
 	static D3D12Engine* s_pInstance;
 public:
 	std::unique_ptr<Camera> m_pCamera;
-	std::shared_ptr<UploadBuffer<PassConstants>> GetConstantBuffer() const;
+	std::shared_ptr<UploadBuffer<ObjectPassConstants>> GetConstantBuffer() const;
 	static D3D12Engine* GetApp()
 	{
 		return s_pInstance;
@@ -53,7 +57,7 @@ public:
 
 	D3D12Engine(Win32App& win32App);
 
-	PassConstants& GetPassConstants();
+	ObjectPassConstants& GetPassConstants();
 
 	void Create3DCamera();
 	void CreateMaterials();

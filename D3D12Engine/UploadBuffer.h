@@ -47,10 +47,16 @@ struct MaterialConstant
 	XMFLOAT4 DiffuseAlbedo;
 };
 
-struct PassConstants
+struct FramePassConstants
+{
+	//XMMATRIX World;
+	XMMATRIX ViewProj;
+	//MaterialConstant Material;
+};
+
+struct ObjectPassConstants
 {
 	XMMATRIX World;
-	XMMATRIX ViewProj;
 	MaterialConstant Material;
 };
 
