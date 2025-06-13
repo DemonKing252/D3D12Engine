@@ -9,17 +9,13 @@ D3DApp::D3DApp(Win32App& win32App)
 
 void D3DApp::InitializeD3D()
 {
-    // step 1: enable debug controller
     ThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&m_debugController)));
     m_debugController->EnableDebugLayer();
 
-    // step 2: create the device
     ThrowIfFailed(D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL_12_2, IID_PPV_ARGS(&m_device)));
 
-    // step 3: create the factory
     ThrowIfFailed(CreateDXGIFactory2(0, IID_PPV_ARGS(&m_factory)));
 
-    // step 4: create command queue
     D3D12_COMMAND_QUEUE_DESC commandQueueDesc;
     ZeroMemory(&commandQueueDesc, sizeof(D3D12_COMMAND_QUEUE_DESC));
 
@@ -28,15 +24,12 @@ void D3DApp::InitializeD3D()
     
     ThrowIfFailed(m_device->CreateCommandQueue(&commandQueueDesc, IID_PPV_ARGS(&m_commandQueue)));
 
-    // step 5: create command allocator
     ThrowIfFailed(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocator)));
 
-    // step 6: create command list
     ThrowIfFailed(m_device->CreateCommandList(NULL, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator.Get(), nullptr, IID_PPV_ARGS(&m_commandList)));
 
     ThrowIfFailed(m_commandList->Close());
 
-    // step 7: create swap chain
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc;
     ZeroMemory(&swapChainDesc, sizeof(DXGI_SWAP_CHAIN_DESC1));
 
@@ -58,15 +51,15 @@ void D3DApp::InitializeD3D()
         m_swapChain.GetAddressOf()
     ));
 
-    // step 8: create fence
     ThrowIfFailed(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence)));
     m_handle = CreateEvent(0, 0, 0, 0);
 
+    this->BuildRenderTarget();
+    this->BuildDepthStencilViews();
 }
 
 void D3DApp::BuildRenderTarget()
 {
-    // step 9: create a descriptor heap which will hold the back buffer memory addresses
     D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc;
     ZeroMemory(&rtvHeapDesc, sizeof(D3D12_DESCRIPTOR_HEAP_DESC));
 
@@ -76,7 +69,6 @@ void D3DApp::BuildRenderTarget()
     ThrowIfFailed(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvDescriptorHeap)));
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-    // step 10: create render target views and store them in the heap
     for (UINT rtvIndex = 0; rtvIndex < m_iNumBuffers; rtvIndex++)
     {
         // get back buffer resource
@@ -88,6 +80,66 @@ void D3DApp::BuildRenderTarget()
         // offset the descriptor handle
         rtvHandle.Offset(1, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV));
     }
+}
+
+void D3DApp::BuildDepthStencilViews()
+{
+    // step 1: create 2d texture that will store the depth
+    D3D12_RESOURCE_DESC depthStencilTextureDesc;
+    ZeroMemory(&depthStencilTextureDesc, sizeof(D3D12_RESOURCE_DESC));
+
+    depthStencilTextureDesc.Format = DXGI_FORMAT_D32_FLOAT;
+    depthStencilTextureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+    depthStencilTextureDesc.MipLevels = 1;
+    depthStencilTextureDesc.DepthOrArraySize = 1;
+    depthStencilTextureDesc.Width = 1024;
+    depthStencilTextureDesc.Height = 768;
+    depthStencilTextureDesc.SampleDesc.Count = 1;
+    depthStencilTextureDesc.SampleDesc.Quality = 0;
+    depthStencilTextureDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+    D3D12_CLEAR_VALUE clearValue;
+    ZeroMemory(&clearValue, sizeof(D3D12_CLEAR_VALUE));
+
+    clearValue.Format = DXGI_FORMAT_D32_FLOAT;
+    clearValue.DepthStencil.Depth = 1.0f;
+    clearValue.DepthStencil.Stencil = 0.0f;
+
+    ThrowIfFailed(m_device->CreateCommittedResource(
+        &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+        D3D12_HEAP_FLAG_NONE,
+        &depthStencilTextureDesc,
+        D3D12_RESOURCE_STATE_COMMON,
+        &clearValue,
+        IID_PPV_ARGS(&m_pDSVResource)
+    ));
+
+    // step 2: create depth stencil view descriptor
+    D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc;
+    ZeroMemory(&depthStencilViewDesc, sizeof(D3D12_DEPTH_STENCIL_VIEW_DESC));
+
+    depthStencilViewDesc.Format = DXGI_FORMAT_D32_FLOAT;
+    depthStencilViewDesc.Flags = D3D12_DSV_FLAG_NONE;
+    depthStencilViewDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+
+    // step 3: create a descriptor heap to hold our resource
+    D3D12_DESCRIPTOR_HEAP_DESC depthStencilDesc;
+    ZeroMemory(&depthStencilDesc, sizeof(D3D12_DESCRIPTOR_HEAP_DESC));
+
+    depthStencilDesc.NumDescriptors = 1;
+    depthStencilDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+
+    ThrowIfFailed(m_device->CreateDescriptorHeap(&depthStencilDesc, IID_PPV_ARGS(&m_pDSVDescriptorHeap)));
+
+    // step 4: create depth stencil view
+    m_device->CreateDepthStencilView(m_pDSVResource.Get(), &depthStencilViewDesc, m_pDSVDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+
+    ZeroMemory(&m_depthStencilDesc, sizeof(D3D12_DEPTH_STENCIL_DESC));
+
+    // step 5: depth comparison flags for the pipeline state
+    m_depthStencilDesc.DepthEnable = true;
+    m_depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+    m_depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
 }
 
 void D3DApp::Sync()

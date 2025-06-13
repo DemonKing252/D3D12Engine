@@ -15,7 +15,6 @@ ObjectPassConstants& D3D12Engine::GetPassConstants()
 D3D12Engine::D3D12Engine(Win32App& win32App) : D3DApp(win32App)
 {
 	this->D3DApp::InitializeD3D();
-	this->D3DApp::BuildRenderTarget();
 	this->Create3DCamera();
 	this->CompileShaders();
 	this->CreateGraphicsPipeline();
@@ -212,7 +211,6 @@ void D3D12Engine::CreateGraphicsPipeline()
 	CD3DX12_ROOT_PARAMETER rootParams[2];
 	rootParams[0].InitAsDescriptorTable(1, &cbvObjDescRange, D3D12_SHADER_VISIBILITY_ALL);
 	rootParams[1].InitAsDescriptorTable(1, &cbvFrameDescRange, D3D12_SHADER_VISIBILITY_ALL);
-	//rootParams[0].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_ALL);
 
 	// Empty for now, we don't have any SRVs or CBVs
 	rootSignatureDesc.Init(_countof(rootParams), rootParams, 0, 0, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
@@ -244,6 +242,10 @@ void D3D12Engine::CreateGraphicsPipeline()
 	defaultPSODesc.SampleDesc.Quality = 0;
 	defaultPSODesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 	defaultPSODesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+
+	// step 6: attach depth stencil state to our pipeline
+	defaultPSODesc.DepthStencilState = m_depthStencilDesc;
+	defaultPSODesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 
 	ThrowIfFailed(m_device->CreateGraphicsPipelineState(&defaultPSODesc, IID_PPV_ARGS(&m_pOpaquePSO)));
 
@@ -368,10 +370,17 @@ void D3D12Engine::OnRender()
 	CD3DX12_CPU_DESCRIPTOR_HANDLE currentRTVHandle(m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 	currentRTVHandle.Offset(m_iBackBufferIndex, m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV));
 
-	m_commandList->OMSetRenderTargets(1, &currentRTVHandle, 0, nullptr);
-
+	// step 7: bind handle to depth stencil view to the render target
+	m_commandList->OMSetRenderTargets(1, &currentRTVHandle, 0, &m_pDSVDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+	
 	float clear_color[] = { 0.0f, 0.2f, 0.4f, 1.0f };
 	m_commandList->ClearRenderTargetView(currentRTVHandle, clear_color, 0, 0);
+
+	// step 8: indicate that this resource will be used to write depth
+	m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pDSVResource.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_DEPTH_WRITE));
+
+	// step 9: clear depth
+	m_commandList->ClearDepthStencilView(m_pDSVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
 	m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -390,6 +399,9 @@ void D3D12Engine::OnRender()
 	m_commandList->SetGraphicsRootDescriptorTable(1, m_pCBVDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 
 	m_pSceneHierarchy->Draw(m_commandList.Get());
+
+	// step 10: transition back to state common
+	m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pDSVResource.Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_COMMON));
 
 	// Indicate that the back buffer will be used to present
 	m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_rtvResources[m_iBackBufferIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));

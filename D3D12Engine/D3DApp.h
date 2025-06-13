@@ -69,6 +69,11 @@ protected:
 	ComPtr<ID3D12DescriptorHeap> m_rtvDescriptorHeap;
 	HANDLE m_handle;
 
+	ComPtr<ID3D12DescriptorHeap> m_pDSVDescriptorHeap;
+	ComPtr<ID3D12Resource> m_pDSVResource;
+	D3D12_DEPTH_STENCIL_DESC m_depthStencilDesc;
+
 	void InitializeD3D();
 	void BuildRenderTarget();
+	void BuildDepthStencilViews();
 };
