@@ -132,8 +132,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			winApp->m_iLastMouseX = winApp->m_iCurrMouseX;
 			winApp->m_iLastMouseY = winApp->m_iCurrMouseY;
 
-			winApp->m_fTheta -= (float)mouseDeltaY * 0.25f;
 			winApp->m_fPhi -= (float)mouseDeltaX * 0.25f;
+			winApp->m_fTheta -= (float)mouseDeltaY * 0.25f;
 
 			winApp->m_fTheta = min(max(winApp->m_fTheta, -89.9f), 89.9f);
 

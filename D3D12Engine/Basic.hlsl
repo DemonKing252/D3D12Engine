@@ -47,5 +47,5 @@ VertexOut VSMain(VSVertexIn vIn)
 float4 PSMain(PSVertexIn vIn) : SV_Target
 {
     // Return the color that was recieved
-    return float4(gMaterial.DiffuseAlbedo.xyz, 1.0f);
+    return float4(gMaterial.DiffuseAlbedo.xyz * vIn.col, 1.0f);
 }

@@ -68,96 +68,76 @@ void D3D12Engine::CreateGeometry()
 {
 	// Triangle Mesh
 	auto triangleMeshData = GeometryGenerator::CreateTriangle(0.25f, 0.25f);
-	
-	auto triangleVertexBufferResource = new UploadBuffer<Vertex>(m_device.Get(), triangleMeshData.m_vVertices.data(), triangleMeshData.VertexSizeInBytes, triangleMeshData.VertexSizeInBytes);
-	auto triangleIndexBufferResource = new UploadBuffer<UINT>(m_device.Get(), triangleMeshData.m_vIndicies.data(), triangleMeshData.IndexSizeInBytes, triangleMeshData.IndexSizeInBytes);
-	
 	auto triangleMeshGeo = std::make_unique<MeshGeometry>();
-	triangleMeshGeo->Name = "triangle";
-	triangleMeshGeo->VertexBufferGPU = d3dHelper::VertexBuffer<Vertex>(triangleVertexBufferResource, triangleMeshData.VertexSizeInBytes);
-	triangleMeshGeo->IndexBufferGPU = d3dHelper::IndexBuffer<UINT>(triangleIndexBufferResource, triangleMeshData.IndexSizeInBytes);
-	triangleMeshGeo->VertexCount = triangleMeshData.m_vVertices.size();
-	triangleMeshGeo->IndexCount = triangleMeshData.m_vIndicies.size();
+	triangleMeshGeo->Init("triangle", m_device.Get(), triangleMeshData);
 	
 	m_meshGeometryMap[triangleMeshGeo->Name] = std::move(triangleMeshGeo);
 
 	// Quad Mesh
 	auto quadMeshData = GeometryGenerator::CreateQuad(4.0f, 3.0f);
-	
-	auto quadVertexBufferResource = new UploadBuffer<Vertex>(m_device.Get(), quadMeshData.m_vVertices.data(), quadMeshData.VertexSizeInBytes, quadMeshData.VertexSizeInBytes);
-	auto quadIndexBufferResource = new UploadBuffer<UINT>(m_device.Get(), quadMeshData.m_vIndicies.data(), quadMeshData.IndexSizeInBytes, quadMeshData.IndexSizeInBytes);
-	
 	auto quadMeshGeo = std::make_unique<MeshGeometry>();
-	quadMeshGeo->Name = "quad";
-	quadMeshGeo->VertexBufferGPU = d3dHelper::VertexBuffer<Vertex>(quadVertexBufferResource, quadMeshData.VertexSizeInBytes);
-	quadMeshGeo->IndexBufferGPU = d3dHelper::IndexBuffer<UINT>(quadIndexBufferResource, quadMeshData.IndexSizeInBytes);
-	quadMeshGeo->VertexCount = quadMeshData.m_vVertices.size();
-	quadMeshGeo->IndexCount = quadMeshData.m_vIndicies.size();
+	quadMeshGeo->Init("quad", m_device.Get(), quadMeshData);
 	
 	m_meshGeometryMap[quadMeshGeo->Name] = std::move(quadMeshGeo);
 	
 	// Create Box
 	auto boxMeshData = GeometryGenerator::CreateBox(0.5f, 0.5f, 0.5f);
-
-	auto boxVertexBufferResource = new UploadBuffer<Vertex>(m_device.Get(), boxMeshData.m_vVertices.data(), boxMeshData.VertexSizeInBytes, boxMeshData.VertexSizeInBytes);
-	auto boxIndexBufferResource = new UploadBuffer<UINT>(m_device.Get(), boxMeshData.m_vIndicies.data(), boxMeshData.IndexSizeInBytes, boxMeshData.IndexSizeInBytes);
-
 	auto boxMeshGeo = std::make_unique<MeshGeometry>();
-	boxMeshGeo->Name = "box";
-	boxMeshGeo->VertexBufferGPU = d3dHelper::VertexBuffer<Vertex>(boxVertexBufferResource, boxMeshData.VertexSizeInBytes);
-	boxMeshGeo->IndexBufferGPU = d3dHelper::IndexBuffer<UINT>(boxIndexBufferResource, boxMeshData.IndexSizeInBytes);
-	boxMeshGeo->VertexCount = boxMeshData.m_vVertices.size();
-	boxMeshGeo->IndexCount = boxMeshData.m_vIndicies.size();
+	boxMeshGeo->Init("box", m_device.Get(), boxMeshData);
 
 	m_meshGeometryMap[boxMeshGeo->Name] = std::move(boxMeshGeo);
 
 	// Create Pyramid
 	auto pyramidMeshData = GeometryGenerator::CreatePyramid(0.5f, 0.5f, 0.5f);
-
-	auto pyramidVertexBufferResource = new UploadBuffer<Vertex>(m_device.Get(), pyramidMeshData.m_vVertices.data(), pyramidMeshData.VertexSizeInBytes, pyramidMeshData.VertexSizeInBytes);
-	auto pyramidIndexBufferResource = new UploadBuffer<UINT>(m_device.Get(), pyramidMeshData.m_vIndicies.data(), pyramidMeshData.IndexSizeInBytes, pyramidMeshData.IndexSizeInBytes);
-
 	auto pyramidMeshGeo = std::make_unique<MeshGeometry>();
-	pyramidMeshGeo->Name = "pyramid";
-	pyramidMeshGeo->VertexBufferGPU = d3dHelper::VertexBuffer<Vertex>(pyramidVertexBufferResource, pyramidMeshData.VertexSizeInBytes);
-	pyramidMeshGeo->IndexBufferGPU = d3dHelper::IndexBuffer<UINT>(pyramidIndexBufferResource, pyramidMeshData.IndexSizeInBytes);
-	pyramidMeshGeo->VertexCount = pyramidMeshData.m_vVertices.size();
-	pyramidMeshGeo->IndexCount = pyramidMeshData.m_vIndicies.size();
+	pyramidMeshGeo->Init("pyramid", m_device.Get(), pyramidMeshData);
 
 	m_meshGeometryMap[pyramidMeshGeo->Name] = std::move(pyramidMeshGeo);
+
+	// Create Cylinder
+	auto clylinderMeshData = GeometryGenerator::CreateCylinder(30, 0.2f, 0.5f, 1.5f);
+	auto cylinderMeshGeo = std::make_unique<MeshGeometry>();
+	cylinderMeshGeo->Init("cylinder", m_device.Get(), clylinderMeshData);
+
+	m_meshGeometryMap[cylinderMeshGeo->Name] = std::move(cylinderMeshGeo);
 }
 
 void D3D12Engine::CreateSceneGraph()
 {
 	m_pSceneHierarchy = new SceneNode();
 
-	auto* quad = new SceneNode(true, XMFLOAT3(0.0f, -0.5f, 0.0f));
+	auto* quad = new SceneNode(true, XMFLOAT3(0.0f, 0.0f, 0.0f));
 	quad->SetMeshGeometry(m_meshGeometryMap["quad"].get());
 	quad->SetMaterial(m_materialMap["magenta"].get());
 	m_pSceneHierarchy->AddChild(quad);
 
-	auto* box1 = new SceneNode(true, XMFLOAT3(2.0f, 0.0f, 0.0f));
+	auto* box1 = new SceneNode(true, XMFLOAT3(2.0f, 0.5f, 0.0f));
 	box1->SetMeshGeometry(m_meshGeometryMap["box"].get());
 	box1->SetMaterial(m_materialMap["cyan"].get());
 	m_pSceneHierarchy->AddChild(box1);
 	
-	auto* box2 = new SceneNode(true, XMFLOAT3(-2.0f, 0.0f, 0.0f));
+	auto* box2 = new SceneNode(true, XMFLOAT3(-2.0f, 0.5f, 0.0f));
 	box2->SetMeshGeometry(m_meshGeometryMap["box"].get());
 	box2->SetMaterial(m_materialMap["cyan"].get());
 	m_pSceneHierarchy->AddChild(box2);
 
-	XMFLOAT3 Pyramid_Translations[] = {
-		XMFLOAT3(+0.0f, 0.0f, +2.0f),
-		XMFLOAT3(-1.5f, 0.0f, +2.0f),
-		XMFLOAT3(+1.5f, 0.0f, +2.0f),
-		XMFLOAT3(-3.0f, 0.0f, +2.0f),
-		XMFLOAT3(+3.0f, 0.0f, +2.0f),
+	auto* cylinder = new SceneNode(true, XMFLOAT3(0.0f, 0.75f, 0.0f));
+	cylinder->SetMeshGeometry(m_meshGeometryMap["cylinder"].get());
+	cylinder->SetMaterial(m_materialMap["white"].get());
+	m_pSceneHierarchy->AddChild(cylinder);
 
-		XMFLOAT3(+0.0f, 0.0f, -2.0f),
-		XMFLOAT3(-1.5f, 0.0f, -2.0f),
-		XMFLOAT3(+1.5f, 0.0f, -2.0f),
-		XMFLOAT3(-3.0f, 0.0f, -2.0f),
-		XMFLOAT3(+3.0f, 0.0f, -2.0f),
+	XMFLOAT3 Pyramid_Translations[] = {
+		XMFLOAT3(+0.0f, 0.5f, +2.0f),
+		XMFLOAT3(-1.5f, 0.5f, +2.0f),
+		XMFLOAT3(+1.5f, 0.5f, +2.0f),
+		XMFLOAT3(-3.0f, 0.5f, +2.0f),
+		XMFLOAT3(+3.0f, 0.5f, +2.0f),
+						  
+		XMFLOAT3(+0.0f, 0.5f, -2.0f),
+		XMFLOAT3(-1.5f, 0.5f, -2.0f),
+		XMFLOAT3(+1.5f, 0.5f, -2.0f),
+		XMFLOAT3(-3.0f, 0.5f, -2.0f),
+		XMFLOAT3(+3.0f, 0.5f, -2.0f),
 
 	};
 

@@ -1,9 +1,15 @@
 #include "Win32App.h"
 #include "D3D12Engine.h"
+/*
+    Project:       D3D12Engine
+    Author:         Liam Blake
+    Created:        2025-05-28
+    Last Modified:  2025-06-18
+*/
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     PSTR lpCmdLine, int nCmdShow)
 {
-    Win32App win32App(hInstance, nCmdShow, L"D3D12 Depth Demo", 100, 100, 1024, 768);
+    Win32App win32App(hInstance, nCmdShow, L"D3D12 Engine", 100, 100, 1024, 768);
     D3D12Engine::Init(win32App);
 
     while (!win32App.QuitMessagePosted())
@@ -11,7 +17,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         win32App.DispatchMessages();
 
         D3D12Engine::GetApp()->OnUpdate();
-
         D3D12Engine::GetApp()->OnRender();
     }
 
