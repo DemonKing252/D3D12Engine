@@ -21,7 +21,7 @@ private:
 	MeshGeometry* m_pMeshGeo;
 	Material* m_pMaterial;
 public:
-	SceneNode(bool isRenderable, XMFLOAT3 Position = XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3 Scale = XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3 Rotation = XMFLOAT3(1.0f, 1.0f, 1.0f));
+	SceneNode(bool isRenderable, XMFLOAT3 Position = XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3 Scale = XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3 Rotation = XMFLOAT3(0.0f, 0.0f, 0.0f));
 	SceneNode();
 	~SceneNode();
 

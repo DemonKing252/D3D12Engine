@@ -61,6 +61,7 @@ public:
 	static GeometryData CreateBox(float width, float height, float depth);
 	static GeometryData CreatePyramid(float width, float height, float depth);
 	static GeometryData CreateCylinder(int stackCount, int sliceCount, float topRadius, float bottomRadius, float height);
+	static GeometryData CreateCurvyClinder(int stackCount, int sliceCount, float topRadius, float bottomRadius, float height);
 	static GeometryData CreateTorus(int sliceCount, float radiusFromCenter, float ringRadius);
 	static GeometryData CreateSphere(int sliceCount, int stackCount, float radius);
 	

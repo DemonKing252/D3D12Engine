@@ -101,6 +101,13 @@ void D3D12Engine::CreateGeometry()
 
 	m_meshGeometryMap[cylinderMeshGeo->Name] = std::move(cylinderMeshGeo);
 
+	// Create Curvy Cylinder
+	auto curvycylinderMeshData = GeometryGenerator::CreateCurvyClinder(30, 30, 0.25f, 0.25f, 6.0f);
+	auto curvycylinderMeshGeo = std::make_unique<MeshGeometry>();
+	curvycylinderMeshGeo->Init("curvy_cylinder", m_device.Get(), curvycylinderMeshData);
+
+	m_meshGeometryMap[curvycylinderMeshGeo->Name] = std::move(curvycylinderMeshGeo);
+
 	// Create Torus
 	auto torusMeshData = GeometryGenerator::CreateTorus(30, 0.5f, 0.2f);
 	auto torusMeshGeo = std::make_unique<MeshGeometry>();
@@ -135,10 +142,21 @@ void D3D12Engine::CreateSceneGraph()
 	torus1->SetMaterial(m_materialMap["white"].get());
 	m_pSceneHierarchy->AddChild(torus1);
 
-	auto* cylinder = new SceneNode(true, XMFLOAT3(0.0f, 1.0f, 0.0f));
+	auto* cylinder = new SceneNode(true, XMFLOAT3(-2.5f, 1.0f, 0.0f));
 	cylinder->SetMeshGeometry(m_meshGeometryMap["cylinder"].get());
 	cylinder->SetMaterial(m_materialMap["white"].get());
 	m_pSceneHierarchy->AddChild(cylinder);
+
+	float Angle = 0.0f;
+	for (UINT i = 0; i < 4; i++)
+	{
+		auto* curvy_cylinder = new SceneNode(true, XMFLOAT3(0.0f, 3.0f, 0.0f), XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(XMConvertToRadians(0.0f), XMConvertToRadians(Angle), XMConvertToRadians(0.0f)));
+		curvy_cylinder->SetMeshGeometry(m_meshGeometryMap["curvy_cylinder"].get());
+		curvy_cylinder->SetMaterial(m_materialMap["white"].get());
+		m_pSceneHierarchy->AddChild(curvy_cylinder);
+		Angle += 90.0f;
+	}
+
 
 	auto* sphere = new SceneNode(true, XMFLOAT3(0.0f, 1.0f, 0.0f));
 	sphere->SetMeshGeometry(m_meshGeometryMap["sphere"].get());
