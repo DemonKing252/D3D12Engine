@@ -26,7 +26,7 @@ D3D12Engine::D3D12Engine(Win32App& win32App) : D3DApp(win32App)
 
 void D3D12Engine::Create3DCamera()
 {
-	m_pCamera = std::make_unique<Camera>(90.0f, 0.01f, 1000.0f, 1024.0f / 768.0f);
+	m_pCamera = std::make_unique<Camera>(XMConvertToRadians(90.0f), 0.01f, 1000.0f, 1024.0f / 768.0f);
 	m_pCamera->SetLens(XMFLOAT3(0.0f, 0.0f, -2.0f), XMFLOAT3(0.0f, 0.0f, 0.0f));
 
 }
@@ -95,11 +95,25 @@ void D3D12Engine::CreateGeometry()
 	m_meshGeometryMap[pyramidMeshGeo->Name] = std::move(pyramidMeshGeo);
 
 	// Create Cylinder
-	auto clylinderMeshData = GeometryGenerator::CreateCylinder(30, 0.2f, 0.5f, 1.5f);
+	auto cylinderMeshData = GeometryGenerator::CreateCylinder(20, 30, 0.5f, 0.5f, 2.0f);
 	auto cylinderMeshGeo = std::make_unique<MeshGeometry>();
-	cylinderMeshGeo->Init("cylinder", m_device.Get(), clylinderMeshData);
+	cylinderMeshGeo->Init("cylinder", m_device.Get(), cylinderMeshData);
 
 	m_meshGeometryMap[cylinderMeshGeo->Name] = std::move(cylinderMeshGeo);
+
+	// Create Torus
+	auto torusMeshData = GeometryGenerator::CreateTorus(30, 0.5f, 0.2f);
+	auto torusMeshGeo = std::make_unique<MeshGeometry>();
+	torusMeshGeo->Init("torus", m_device.Get(), torusMeshData);
+
+	m_meshGeometryMap[torusMeshGeo->Name] = std::move(torusMeshGeo);
+
+	// Create Sphere
+	auto sphereMeshData = GeometryGenerator::CreateSphere(30, 30, 0.5f);
+	auto sphereMeshGeo = std::make_unique<MeshGeometry>();
+	sphereMeshGeo->Init("sphere", m_device.Get(), sphereMeshData);
+
+	m_meshGeometryMap[sphereMeshGeo->Name] = std::move(sphereMeshGeo);
 }
 
 void D3D12Engine::CreateSceneGraph()
@@ -116,15 +130,20 @@ void D3D12Engine::CreateSceneGraph()
 	box1->SetMaterial(m_materialMap["cyan"].get());
 	m_pSceneHierarchy->AddChild(box1);
 	
-	auto* box2 = new SceneNode(true, XMFLOAT3(-2.0f, 0.5f, 0.0f));
-	box2->SetMeshGeometry(m_meshGeometryMap["box"].get());
-	box2->SetMaterial(m_materialMap["cyan"].get());
-	m_pSceneHierarchy->AddChild(box2);
+	auto* torus1 = new SceneNode(true, XMFLOAT3(-1.5f, 0.5f, 0.0f));
+	torus1->SetMeshGeometry(m_meshGeometryMap["torus"].get());
+	torus1->SetMaterial(m_materialMap["white"].get());
+	m_pSceneHierarchy->AddChild(torus1);
 
-	auto* cylinder = new SceneNode(true, XMFLOAT3(0.0f, 0.75f, 0.0f));
+	auto* cylinder = new SceneNode(true, XMFLOAT3(0.0f, 1.0f, 0.0f));
 	cylinder->SetMeshGeometry(m_meshGeometryMap["cylinder"].get());
 	cylinder->SetMaterial(m_materialMap["white"].get());
 	m_pSceneHierarchy->AddChild(cylinder);
+
+	auto* sphere = new SceneNode(true, XMFLOAT3(0.0f, 1.0f, 0.0f));
+	sphere->SetMeshGeometry(m_meshGeometryMap["sphere"].get());
+	sphere->SetMaterial(m_materialMap["white"].get());
+	box1->AddChild(sphere);
 
 	XMFLOAT3 Pyramid_Translations[] = {
 		XMFLOAT3(+0.0f, 0.5f, +2.0f),
@@ -275,7 +294,7 @@ void D3D12Engine::BuildPassConstantResources()
 	m_pObjectConstants = std::make_shared<UploadBuffer<ObjectPassConstants>>(m_device.Get(), &m_objPassConstants, sizeof(m_objPassConstants), (1 + SceneNode::Instances()) * 256U);
 
 	const UINT cbvDescriptorHandleIncrementSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	UINT drawableIndex = 1;
+	UINT drawableIndex = 1;	// index 0 is our CBV Resource for Per-Frame Constants. All others are Per-Object (index 1 and higher)
 
 	auto allocate_resource_memory = [this, &drawableIndex, &cbvDescriptorHandleIncrementSize] (SceneNode* c)
 	{
