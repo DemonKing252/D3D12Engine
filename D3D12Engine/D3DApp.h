@@ -48,10 +48,12 @@ public:
 	virtual void OnUpdate() = 0;
 	virtual void OnRender() = 0;
 	
-	void Sync();;
+	void WaitForGPU();;
 	void PresentFrame();
+	void ExecuteCommandList();
 
 	D3DApp(Win32App& win32App);
+	ID3D12Device* GetDev() const;
 protected:
 	UINT64 m_fenceValue;
 	const UINT32 m_iNumBuffers = 3;

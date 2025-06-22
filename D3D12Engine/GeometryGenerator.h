@@ -11,6 +11,7 @@ struct Vertex
 {
 	XMFLOAT3 Position;
 	XMFLOAT3 Color = XMFLOAT3(1.0f, 1.0f, 1.0f);
+	XMFLOAT2 UV = XMFLOAT2(0.0f, 0.0f);
 };
 
 struct GeometryData

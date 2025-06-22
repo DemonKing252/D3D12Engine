@@ -27,10 +27,10 @@ GeometryData GeometryGenerator::CreateQuad(float width, float depth)
     GeometryData quadMeshGeo;
     std::vector<Vertex> verticies =
     {
-        { XMFLOAT3(-width, 0.0f, +depth), XMFLOAT3(1.0f, 0.0f, 0.0f) },
-        { XMFLOAT3(+width, 0.0f, +depth), XMFLOAT3(1.0f, 0.0f, 0.0f) },
-        { XMFLOAT3(+width, 0.0f, -depth), XMFLOAT3(0.0f, 0.0f, 1.0f) },
-        { XMFLOAT3(-width, 0.0f, -depth), XMFLOAT3(0.0f, 0.0f, 1.0f) },
+        { XMFLOAT3(-width, 0.0f, +depth), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+        { XMFLOAT3(+width, 0.0f, +depth), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(width, 0.0f) },
+        { XMFLOAT3(+width, 0.0f, -depth), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(width, depth) },
+        { XMFLOAT3(-width, 0.0f, -depth), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, depth) },
     };
 
     std::vector<UINT> indicies = {
@@ -101,12 +101,12 @@ GeometryData GeometryGenerator::CreatePyramid(float width, float height, float d
     GeometryData meshGeo;
     std::vector<Vertex> verticies =
     {
-        { XMFLOAT3(-width, -height, -depth)},
-        { XMFLOAT3(-width, -height, +depth)},
-        { XMFLOAT3(+width, -height, +depth)},
-        { XMFLOAT3(+width, -height, -depth)},
+        { XMFLOAT3(-width*0.5f, -height*0.5f, -depth*0.5f), XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT2(0.0f, 0.0f) },
+        { XMFLOAT3(-width*0.5f, -height*0.5f, +depth*0.5f), XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT2(width, 0.0f) },
+        { XMFLOAT3(+width*0.5f, -height*0.5f, +depth*0.5f), XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT2(0.0f, 0.0f) },
+        { XMFLOAT3(+width*0.5f, -height*0.5f, -depth*0.5f), XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT2(depth, 0.0f) },
 
-        { XMFLOAT3(0.0f, height, 0.0f), XMFLOAT3(1.0f, 0.0f, 1.0f)},
+        { XMFLOAT3(0.0f, height*0.5f, 0.0f), XMFLOAT3(1.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, height)},
     };
 
     std::vector<UINT> indicies = {

@@ -7,6 +7,11 @@ D3DApp::D3DApp(Win32App& win32App)
     m_fenceValue = 0;
 }
 
+ID3D12Device* D3DApp::GetDev() const
+{
+    return m_device.Get();
+}
+
 void D3DApp::InitializeD3D()
 {
     ThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&m_debugController)));
@@ -142,7 +147,7 @@ void D3DApp::BuildDepthStencilViews()
     m_depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
 }
 
-void D3DApp::Sync()
+void D3DApp::WaitForGPU()
 {
     // Wait for GPU to catch up to the commands being recorded in the command queue
     ThrowIfFailed(m_commandQueue->Signal(m_fence.Get(), m_fenceValue));
@@ -158,4 +163,11 @@ void D3DApp::PresentFrame()
 {
     // Present(1, 0) to keep V Sync on. Or Present(0, 0) to keep V Sync off
     ThrowIfFailed(m_swapChain->Present(1, 0));
+}
+
+void D3DApp::ExecuteCommandList()
+{
+    ThrowIfFailed(m_commandList->Close());
+    ID3D12CommandList* cmdLists[] = { m_commandList.Get() };
+    m_commandQueue->ExecuteCommandLists(1, cmdLists);
 }

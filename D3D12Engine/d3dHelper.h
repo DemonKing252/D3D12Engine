@@ -12,12 +12,26 @@ public:
 	template <class T>
 	static D3D12_INDEX_BUFFER_VIEW IndexBuffer(UploadBuffer<T>* indexBuffer, const UINT& size);
 
+	static UINT CBVSRVDescriptorSize(ComPtr<ID3D12Device> dev);
+
+	static CD3DX12_CPU_DESCRIPTOR_HANDLE CPUHandleAt(ComPtr<ID3D12DescriptorHeap> heap, ComPtr<ID3D12Device> dev, UINT offset);
+	static CD3DX12_GPU_DESCRIPTOR_HANDLE GPUHandleAt(ComPtr<ID3D12DescriptorHeap> heap, ComPtr<ID3D12Device> dev, UINT offset);
 };
 
 struct Material
 {
 	std::string Name;
 	DirectX::XMFLOAT4 DiffuseAlbedo;
+};
+
+struct Texture
+{
+	std::string Name;
+	std::wstring PathName;
+	CD3DX12_CPU_DESCRIPTOR_HANDLE CPUHandle;
+	CD3DX12_GPU_DESCRIPTOR_HANDLE GPUHandle;
+	ComPtr<ID3D12Resource> TextureResource;
+	ComPtr<ID3D12Resource> TextureUploadResource;
 };
 
 template<class T>

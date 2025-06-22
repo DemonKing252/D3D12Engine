@@ -2,16 +2,19 @@ struct VSVertexIn
 {
     float3 pos : POSITION;
     float3 col : COLOR;
+    float2 uv : UVCOORD;
 };
 struct PSVertexIn
 {    
     float4 pos : SV_Position;
     float3 col : COLOR;
+    float2 uv : UVCOORD;
 };
 struct VertexOut
 {
     float4 pos : SV_Position;
     float3 col : COLOR;
+    float2 uv : UVCOORD;
 };
 
 struct Material
@@ -29,6 +32,9 @@ cbuffer FramePassConstants : register(b1) // Per Frame
     float4x4 gViewProj;
 }
 
+SamplerState sample : register(s0);
+Texture2D tex : register(t0);
+
 VertexOut VSMain(VSVertexIn vIn)
 {
     // Just pass the position and color to the Pixel Shader, we aren't doing any transformations yet
@@ -40,12 +46,17 @@ VertexOut VSMain(VSVertexIn vIn)
     
     vOut.pos = WorldP;
     vOut.col = vIn.col;
+    vOut.uv = vIn.uv;
     
     return vOut;
 }
 
 float4 PSMain(PSVertexIn vIn) : SV_Target
 {
+    float4 texUV = tex.Sample(sample, vIn.uv);
+    
+    float3 color_vbo = gMaterial.DiffuseAlbedo.xyz * vIn.col;
+    
     // Return vertex color * Material Diffuse
-    return float4(gMaterial.DiffuseAlbedo.xyz * vIn.col, 1.0f);
+    return float4(texUV.xyz, 1.0f);
 }
