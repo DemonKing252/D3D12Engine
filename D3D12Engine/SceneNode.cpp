@@ -48,6 +48,11 @@ bool SceneNode::IsRenderable() const
 	return m_bIsRenderable;
 }
 
+void SceneNode::SetTexture(Texture* tex)
+{
+	this->m_pTexture = tex;
+}
+
 void SceneNode::SetMaterial(Material* mat)
 {
 	this->m_pMaterial = mat;
@@ -70,7 +75,7 @@ void SceneNode::SetRenderableNodeIndex(const std::uint64_t index)
 
 void SceneNode::SetGraphicsHandleToConstantBuffer(const CD3DX12_GPU_DESCRIPTOR_HANDLE handle)
 {
-	this->GPUDescriptorHandle = handle;
+	this->GPUObjectHandle = handle;
 }
 
 void SceneNode::AddChild(SceneNode* rhs)
@@ -98,7 +103,8 @@ void SceneNode::Draw(ID3D12GraphicsCommandList* pCmdList)
 	{	
 		pCmdList->IASetVertexBuffers(0, 1, &m_pMeshGeo->VertexBufferGPU);
 		pCmdList->IASetIndexBuffer(&m_pMeshGeo->IndexBufferGPU);
-		pCmdList->SetGraphicsRootDescriptorTable(0, GPUDescriptorHandle);		
+		pCmdList->SetGraphicsRootDescriptorTable(0, GPUObjectHandle);
+		pCmdList->SetGraphicsRootDescriptorTable(2, m_pTexture->GPUHandle);
 		pCmdList->DrawIndexedInstanced(m_pMeshGeo->IndexCount, 1, 0, 0, 0);
 	}
 		

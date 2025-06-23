@@ -26,7 +26,7 @@ private:
 
 	std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> m_meshGeometryMap;
 	std::unordered_map<std::string, std::unique_ptr<Material>> m_materialMap;
-	std::unordered_map<std::string, std::unique_ptr<Texture>> m_textureMap;	
+	std::unordered_map<std::string, std::shared_ptr<Texture>> m_textureMap;	
 	std::shared_ptr<UploadBuffer<ObjectPassConstants>> m_pObjectConstants;
 	std::shared_ptr<UploadBuffer<FramePassConstants>> m_pFrameConstants;
 
@@ -35,8 +35,6 @@ private:
 
 	SceneNode* m_pSceneHierarchy;
 	
-	ComPtr<ID3D12DescriptorHeap> m_pCBVSRVDescriptorHeap;
-	//ComPtr<ID3D12DescriptorHeap> m_pSRVDescriptorHeap;
 
 	D3D12_VIEWPORT m_vViewPort;
 	D3D12_RECT m_rScissorsRect;
@@ -46,6 +44,7 @@ private:
 	
 	static D3D12Engine* s_pInstance;
 public:
+	ComPtr<ID3D12DescriptorHeap> m_pCBVSRVDescriptorHeap;
 	std::unique_ptr<Camera> m_pCamera;
 	std::shared_ptr<UploadBuffer<ObjectPassConstants>> GetConstantBuffer() const;
 	static D3D12Engine* GetApp()
@@ -61,6 +60,7 @@ public:
 	D3D12Engine(Win32App& win32App);
 
 	ObjectPassConstants& GetPassConstants();
+	ComPtr<ID3D12DescriptorHeap> GetCBVSRVDescriptorHeap();
 
 	void Create3DCamera();
 	void CreateMaterials();

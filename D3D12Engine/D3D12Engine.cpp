@@ -27,6 +27,11 @@ D3D12Engine::D3D12Engine(Win32App& win32App) : D3DApp(win32App)
 	this->BuildPassConstantResources();
 }
 
+ComPtr<ID3D12DescriptorHeap> D3D12Engine::GetCBVSRVDescriptorHeap()
+{
+	return m_pCBVSRVDescriptorHeap;
+}
+
 void D3D12Engine::Create3DCamera()
 {
 	m_pCamera = std::make_unique<Camera>(XMConvertToRadians(90.0f), 0.01f, 1000.0f, 1024.0f / 768.0f);
@@ -67,14 +72,6 @@ void D3D12Engine::CreateMaterials()
 	m_materialMap[orange->Name] = std::move(orange);
 }
 
-void D3D12Engine::CreateTextures()
-{
-	auto bricksTexture = std::make_unique<Texture>();
-	bricksTexture->Name = "bricks";
-	bricksTexture->PathName = L"Textures/bricks.dds";
-	m_textureMap[bricksTexture->Name] = std::move(bricksTexture);
-}
-
 void D3D12Engine::CreateDescriptorHeaps()
 {
 	D3D12_DESCRIPTOR_HEAP_DESC cbvDescHeap;
@@ -87,25 +84,47 @@ void D3D12Engine::CreateDescriptorHeaps()
 	ThrowIfFailed(m_device->CreateDescriptorHeap(&cbvDescHeap, IID_PPV_ARGS(m_pCBVSRVDescriptorHeap.GetAddressOf())));
 }
 
+void D3D12Engine::CreateTextures()
+{
+	// Descriptor index starts at 1 because index 0 is for our Frame Pass Constants
+	auto bricksTexture = std::make_shared<Texture>();
+	bricksTexture->Name = "bricks";
+	bricksTexture->PathName = L"Textures/bricks.dds";
+	m_textureMap[bricksTexture->Name] = bricksTexture;
+
+	auto checkboardTexture = std::make_shared<Texture>();
+	checkboardTexture->Name = "checkboard";
+	checkboardTexture->PathName = L"Textures/checkboard.dds";
+	m_textureMap[checkboardTexture->Name] = checkboardTexture;
+}
+
 void D3D12Engine::LoadTextures()
 {
 	ThrowIfFailed(m_commandAllocator->Reset());
 	ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
 
-	auto bricks = m_textureMap["bricks"].get();
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc;
+	ZeroMemory(&srvDesc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 
-	ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(m_device.Get(), m_commandList.Get(), bricks->PathName.c_str(), bricks->TextureResource, bricks->TextureUploadResource));
+	UINT index = 1;
+	for (auto texture : m_textureMap)
+	{
+		ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(m_device.Get(), m_commandList.Get(), texture.second->PathName.c_str(), texture.second->TextureResource, texture.second->TextureUploadResource));
+
+		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		srvDesc.Format = texture.second->TextureResource->GetDesc().Format;
+		srvDesc.Texture2D.MipLevels = texture.second->TextureResource->GetDesc().MipLevels;
+
+		texture.second->CPUHandle = d3dHelper::CPUHandleAt(m_pCBVSRVDescriptorHeap, m_device, index);
+		texture.second->GPUHandle = d3dHelper::GPUHandleAt(m_pCBVSRVDescriptorHeap, m_device, index);
+
+		m_device->CreateShaderResourceView(texture.second->TextureResource.Get(), &srvDesc, texture.second->CPUHandle);
+		++index;
+	}	
 	
 	D3DApp::ExecuteCommandList();
 	D3DApp::WaitForGPU();
-	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc;
-	ZeroMemory(&srvDesc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
-	srvDesc.Format = bricks->TextureResource->GetDesc().Format;
-	srvDesc.Texture2D.MipLevels = bricks->TextureResource->GetDesc().MipLevels;
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-
-	m_device->CreateShaderResourceView(bricks->TextureResource.Get(), &srvDesc, d3dHelper::CPUHandleAt(m_pCBVSRVDescriptorHeap, m_device, 1));
 }
 
 void D3D12Engine::CreateGeometry()
@@ -174,21 +193,25 @@ void D3D12Engine::CreateSceneGraph()
 	auto* quad = new SceneNode(true, XMFLOAT3(0.0f, 0.0f, 0.0f));
 	quad->SetMeshGeometry(m_meshGeometryMap["quad"].get());
 	quad->SetMaterial(m_materialMap["magenta"].get());
+	quad->SetTexture(m_textureMap["checkboard"].get());
 	m_pSceneHierarchy->AddChild(quad);
 
 	auto* box1 = new SceneNode(true, XMFLOAT3(2.0f, 0.5f, 0.0f));
 	box1->SetMeshGeometry(m_meshGeometryMap["box"].get());
 	box1->SetMaterial(m_materialMap["cyan"].get());
+	box1->SetTexture(m_textureMap["bricks"].get());
 	m_pSceneHierarchy->AddChild(box1);
 	
 	auto* torus1 = new SceneNode(true, XMFLOAT3(-1.5f, 0.5f, 0.0f));
 	torus1->SetMeshGeometry(m_meshGeometryMap["torus"].get());
 	torus1->SetMaterial(m_materialMap["white"].get());
+	torus1->SetTexture(m_textureMap["bricks"].get());
 	m_pSceneHierarchy->AddChild(torus1);
 
 	auto* cylinder = new SceneNode(true, XMFLOAT3(-2.5f, 1.0f, 0.0f));
 	cylinder->SetMeshGeometry(m_meshGeometryMap["cylinder"].get());
 	cylinder->SetMaterial(m_materialMap["white"].get());
+	cylinder->SetTexture(m_textureMap["bricks"].get());
 	m_pSceneHierarchy->AddChild(cylinder);
 
 	float Angle = 0.0f;
@@ -197,6 +220,7 @@ void D3D12Engine::CreateSceneGraph()
 		auto* curvy_cylinder = new SceneNode(true, XMFLOAT3(0.0f, 3.0f, 0.0f), XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(XMConvertToRadians(0.0f), XMConvertToRadians(Angle), XMConvertToRadians(0.0f)));
 		curvy_cylinder->SetMeshGeometry(m_meshGeometryMap["curvy_cylinder"].get());
 		curvy_cylinder->SetMaterial(m_materialMap["white"].get());
+		curvy_cylinder->SetTexture(m_textureMap["bricks"].get());
 		m_pSceneHierarchy->AddChild(curvy_cylinder);
 		Angle += 90.0f;
 	}
@@ -205,6 +229,7 @@ void D3D12Engine::CreateSceneGraph()
 	auto* sphere = new SceneNode(true, XMFLOAT3(0.0f, 1.0f, 0.0f));
 	sphere->SetMeshGeometry(m_meshGeometryMap["sphere"].get());
 	sphere->SetMaterial(m_materialMap["white"].get());
+	sphere->SetTexture(m_textureMap["bricks"].get());
 	box1->AddChild(sphere);
 
 	XMFLOAT3 Pyramid_Translations[] = {
@@ -229,6 +254,7 @@ void D3D12Engine::CreateSceneGraph()
 
 		// Because why not
 		pyramid->SetMaterial(pyramidIndex < 5 ? m_materialMap["teal"].get() : m_materialMap["orange"].get());
+		pyramid->SetTexture(m_textureMap["bricks"].get());
 		m_pSceneHierarchy->AddChild(pyramid);
 	}
 	

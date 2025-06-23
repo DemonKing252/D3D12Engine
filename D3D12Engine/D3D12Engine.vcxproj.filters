@@ -87,5 +87,8 @@
     <Image Include="Textures\bricks.dds">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="Textures\checkboard.dds">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

@@ -14,12 +14,13 @@ class SceneNode
 private:
 	bool m_bIsRenderable;
 	static std::uint64_t s_iNumberOfInstances;
-	CD3DX12_GPU_DESCRIPTOR_HANDLE GPUDescriptorHandle;
+	CD3DX12_GPU_DESCRIPTOR_HANDLE GPUObjectHandle;
 	std::uint64_t m_iRenderableNodeIndex = 0;
 	std::vector<SceneNode*> m_children;
 	SceneNode* m_pParentNode;
 	MeshGeometry* m_pMeshGeo;
 	Material* m_pMaterial;
+	Texture* m_pTexture;
 public:
 	SceneNode(bool isRenderable, XMFLOAT3 Position = XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3 Scale = XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3 Rotation = XMFLOAT3(0.0f, 0.0f, 0.0f));
 	SceneNode();
@@ -35,6 +36,7 @@ public:
 	static std::uint64_t Instances();
 	bool IsRenderable() const;
 
+	void SetTexture(Texture* tex);
 	void SetMaterial(Material* mat);
 	void SetMeshGeometry(MeshGeometry* mesh);
 	void SetParent(SceneNode* parent);
