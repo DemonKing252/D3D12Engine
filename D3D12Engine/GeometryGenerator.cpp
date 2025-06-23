@@ -51,15 +51,36 @@ GeometryData GeometryGenerator::CreateBox(float width, float height, float depth
     GeometryData meshGeo;
     std::vector<Vertex> verticies =
     {
-        { XMFLOAT3(-width, +height, -depth), XMFLOAT3(1.0f, 1.0f, 0.0f) },
-        { XMFLOAT3(+width, +height, -depth), XMFLOAT3(1.0f, 1.0f, 0.0f) },
-        { XMFLOAT3(+width, -height, -depth), XMFLOAT3(1.0f, 1.0f, 0.0f) },
-        { XMFLOAT3(-width, -height, -depth), XMFLOAT3(1.0f, 1.0f, 0.0f) },
+        { XMFLOAT3(-width, +height, -depth), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+        { XMFLOAT3(-width, +height, +depth), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
+        { XMFLOAT3(+width, +height, +depth), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
+        { XMFLOAT3(+width, +height, -depth), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
+                                                                       
+        { XMFLOAT3(-width, -height, -depth), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+        { XMFLOAT3(-width, -height, +depth), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
+        { XMFLOAT3(+width, -height, +depth), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
+        { XMFLOAT3(+width, -height, -depth), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
 
-        { XMFLOAT3(-width, +height, +depth), XMFLOAT3(1.0f, 0.0f, 1.0f) },
-        { XMFLOAT3(+width, +height, +depth), XMFLOAT3(1.0f, 0.0f, 1.0f) },
-        { XMFLOAT3(+width, -height, +depth), XMFLOAT3(1.0f, 0.0f, 1.0f) },
-        { XMFLOAT3(-width, -height, +depth), XMFLOAT3(1.0f, 0.0f, 1.0f) },
+        { XMFLOAT3(-width, -height, -depth), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+        { XMFLOAT3(-width, +height, -depth), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
+        { XMFLOAT3(+width, +height, -depth), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
+        { XMFLOAT3(+width, -height, -depth), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
+
+        { XMFLOAT3(-width, -height, +depth), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+        { XMFLOAT3(-width, +height, +depth), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
+        { XMFLOAT3(+width, +height, +depth), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
+        { XMFLOAT3(+width, -height, +depth), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
+
+        { XMFLOAT3(+width, -height, -depth), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+        { XMFLOAT3(+width, +height, -depth), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
+        { XMFLOAT3(+width, +height, +depth), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
+        { XMFLOAT3(+width, -height, +depth), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
+
+        { XMFLOAT3(-width, -height, -depth), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+        { XMFLOAT3(-width, +height, -depth), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
+        { XMFLOAT3(-width, +height, +depth), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
+        { XMFLOAT3(-width, -height, +depth), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
+
     };
 
     std::vector<UINT> indicies = {
@@ -67,25 +88,21 @@ GeometryData GeometryGenerator::CreateBox(float width, float height, float depth
         0, 1, 2,
         2, 3, 0,
 
-        // top face
-        0, 4, 5,
-        5, 1, 0,
+        4, 7, 6,
+        6, 5, 4,
 
-        // bottom face
-        3, 2, 6,
-        6, 7, 3,
+        8, 9, 10,
+        10, 11, 8,
 
-        // left face
-        7, 4, 0,
-        0, 3, 7,
+        12, 15, 14,
+        14, 13, 12,
 
-        // right face
-        1, 5, 6,
-        6, 2, 1,
+        16, 17, 18,
+        18, 19, 16,
+        
+        20, 23, 22,
+        22, 21, 20,
 
-        // back face
-        5, 4, 7,
-        7, 6, 5
     };
 
     meshGeo.m_vVertices = verticies;
@@ -203,9 +220,9 @@ GeometryData GeometryGenerator::CreateCylinder(int stackCount, int sliceCount, f
         topCenter.y = height * 0.5f;
         topCenter.z = 0.0f;
 
-        verticies.push_back({ XMFLOAT3(topLeft.x, topLeft.y, topLeft.z), Colors[i % 3] });
-        verticies.push_back({ XMFLOAT3(topCenter.x, topCenter.y, topCenter.z), Colors[i % 3] });
-        verticies.push_back({ XMFLOAT3(topRight.x, topRight.y, topRight.z), Colors[i % 3] });
+        verticies.push_back({ XMFLOAT3(topLeft.x, topLeft.y, topLeft.z), Colors[i % 3], XMFLOAT2(topLeft.x, topLeft.z) });
+        verticies.push_back({ XMFLOAT3(topCenter.x, topCenter.y, topCenter.z), Colors[i % 3], XMFLOAT2(0.5f, 0.5f) });
+        verticies.push_back({ XMFLOAT3(topRight.x, topRight.y, topRight.z), Colors[i % 3], XMFLOAT2(topRight.x, topRight.z) });
 
         angleRadians += offsetX;
     }

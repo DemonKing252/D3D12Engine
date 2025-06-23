@@ -196,7 +196,7 @@ void D3D12Engine::CreateSceneGraph()
 	quad->SetTexture(m_textureMap["checkboard"].get());
 	m_pSceneHierarchy->AddChild(quad);
 
-	auto* box1 = new SceneNode(true, XMFLOAT3(2.0f, 0.5f, 0.0f));
+	auto* box1 = new SceneNode(true, XMFLOAT3(2.0f, 1.5f, 0.0f));
 	box1->SetMeshGeometry(m_meshGeometryMap["box"].get());
 	box1->SetMaterial(m_materialMap["cyan"].get());
 	box1->SetTexture(m_textureMap["bricks"].get());
