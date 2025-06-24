@@ -5,6 +5,7 @@
 #include <string>
 #include "UploadBuffer.h"
 #include "d3dHelper.h"
+#include <cmath>
 using namespace DirectX;
 
 struct Vertex
