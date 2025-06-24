@@ -58,5 +58,5 @@ float4 PSMain(PSVertexIn vIn) : SV_Target
     float3 vertex_color = gMaterial.DiffuseAlbedo.xyz * vIn.col;
     
     // Return vertex color * Material Diffuse
-    return float4(vertex_color, 1.0f);
+    return float4(texUV.xyz, 1.0f);
 }

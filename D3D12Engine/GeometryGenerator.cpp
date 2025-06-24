@@ -258,9 +258,9 @@ GeometryData GeometryGenerator::CreateCylinder(int stackCount, int sliceCount, f
         topCenter.y = -height * 0.5f;
         topCenter.z = 0.0f;
 
-        verticies.push_back({ XMFLOAT3(bottomRight.x, bottomRight.y, bottomRight.z), Colors[i % 3] });
-        verticies.push_back({ XMFLOAT3(topCenter.x, topCenter.y, topCenter.z), Colors[i % 3] });
-        verticies.push_back({ XMFLOAT3(bottomLeft.x, bottomLeft.y, bottomLeft.z), Colors[i % 3] });
+        verticies.push_back({ XMFLOAT3(bottomRight.x, bottomRight.y, bottomRight.z), Colors[i % 3], XMFLOAT2((cosf(angleRadians + offsetX) * 0.5f) + 0.5f, (sinf(angleRadians + offsetX) * 0.5f) + 0.5f) });
+        verticies.push_back({ XMFLOAT3(topCenter.x, topCenter.y, topCenter.z), Colors[i % 3], XMFLOAT2(0.5f, 0.5f)});
+        verticies.push_back({ XMFLOAT3(bottomLeft.x, bottomLeft.y, bottomLeft.z), Colors[i % 3], XMFLOAT2((cosf(angleRadians) * 0.5f) + 0.5f, (sinf(angleRadians) * 0.5f) + 0.5f) });
 
         angleRadians += offsetX;
     }
