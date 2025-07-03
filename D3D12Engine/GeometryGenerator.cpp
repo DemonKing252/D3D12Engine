@@ -477,10 +477,12 @@ GeometryData GeometryGenerator::CreateTorus(int sliceCount, float radiusFromCent
     float theta = 0.0f;
     float phi = -90.0f;
     float offset = XMConvertToRadians(360.0f / (float)sliceCount);
+    XMFLOAT2 uvCoord = XMFLOAT2(0.0f, 0.0f);
+    float uvOffsetX = 4.0f * std::ceilf(radiusFromCenter) / static_cast<float>(sliceCount);
+    float uvOffsetY = 4.0f * std::ceilf(radiusFromCenter) / static_cast<float>(sliceCount);
 
     for (UINT i = 0; i < sliceCount; i++)
     {
-
         for (UINT j = 0; j < sliceCount; j++)
         {
             XMFLOAT3 bottomLeft;
@@ -505,14 +507,15 @@ GeometryData GeometryGenerator::CreateTorus(int sliceCount, float radiusFromCent
             
             int colorIndex = j % 6;
 
-            verticies.push_back({ XMFLOAT3(bottomLeft.x, bottomLeft.y, bottomLeft.z), Colors[colorIndex] });
-            verticies.push_back({ XMFLOAT3(topLeft.x, topLeft.y, topLeft.z), Colors[colorIndex] });
-            verticies.push_back({ XMFLOAT3(topRight.x, topRight.y, topRight.z), Colors[colorIndex] });
-            verticies.push_back({ XMFLOAT3(bottomRight.x, bottomRight.y, bottomRight.z), Colors[colorIndex] });
+            verticies.push_back({ XMFLOAT3(bottomLeft.x, bottomLeft.y, bottomLeft.z), Colors[colorIndex], XMFLOAT2(uvCoord.x, uvCoord.y) });
+            verticies.push_back({ XMFLOAT3(topLeft.x, topLeft.y, topLeft.z), Colors[colorIndex], XMFLOAT2(uvCoord.x, uvCoord.y+uvOffsetY) });
+            verticies.push_back({ XMFLOAT3(topRight.x, topRight.y, topRight.z), Colors[colorIndex], XMFLOAT2(uvCoord.x + uvOffsetX, uvCoord.y + uvOffsetY) });
+            verticies.push_back({ XMFLOAT3(bottomRight.x, bottomRight.y, bottomRight.z), Colors[colorIndex], XMFLOAT2(uvCoord.x + uvOffsetX, uvCoord.y) });
             phi += offset;
-
+            uvCoord.x += uvOffsetX;
         }
         theta += offset;
+        uvCoord.y += uvOffsetY;
     }
     
     UINT index = 0;
@@ -556,6 +559,10 @@ GeometryData GeometryGenerator::CreateSphere(int sliceCount, int stackCount, flo
     float theta = 0.0f;
     float phi = 0.0f;
     float offset = XMConvertToRadians(360.0f / (float)sliceCount);
+    XMFLOAT2 uvCoord = XMFLOAT2(0.0f, 0.0f);
+    float uvOffsetX = 2.0f * std::ceilf(radius) / static_cast<float>(sliceCount);
+    float uvOffsetY = 2.0f * std::ceilf(radius) / static_cast<float>(stackCount);
+
     for (UINT i = 0; i < sliceCount; i++)
     {
         for (UINT j = 0; j < stackCount; j++)
@@ -581,13 +588,16 @@ GeometryData GeometryGenerator::CreateSphere(int sliceCount, int stackCount, flo
             bottomRight.z = radius * sinf(phi+offset) * cosf(theta);
 
             int colorIndex = (i + j) % 3;
-            verticies.push_back({ XMFLOAT3(bottomLeft.x, bottomLeft.y, bottomLeft.z), Colors[colorIndex] });
-            verticies.push_back({ XMFLOAT3(topLeft.x, topLeft.y, topLeft.z), Colors[colorIndex] });
-            verticies.push_back({ XMFLOAT3(topRight.x, topRight.y, topRight.z), Colors[colorIndex] });
-            verticies.push_back({ XMFLOAT3(bottomRight.x, bottomRight.y, bottomRight.z), Colors[colorIndex] });
+            verticies.push_back({ XMFLOAT3(bottomLeft.x, bottomLeft.y, bottomLeft.z), Colors[colorIndex], XMFLOAT2(uvCoord.x, uvCoord.y) });
+            verticies.push_back({ XMFLOAT3(topLeft.x, topLeft.y, topLeft.z), Colors[colorIndex], XMFLOAT2(uvCoord.x, uvCoord.y + uvOffsetX) });
+            verticies.push_back({ XMFLOAT3(topRight.x, topRight.y, topRight.z), Colors[colorIndex], XMFLOAT2(uvCoord.x + uvOffsetX, uvCoord.y + uvOffsetX) });
+            verticies.push_back({ XMFLOAT3(bottomRight.x, bottomRight.y, bottomRight.z), Colors[colorIndex], XMFLOAT2(uvCoord.x + uvOffsetX, uvCoord.y) });
+
             phi += offset;
+            uvCoord.x += uvOffsetX;
         }      
         theta += offset;
+        uvCoord.y += uvOffsetY;
     }
 
     UINT index = 0;
