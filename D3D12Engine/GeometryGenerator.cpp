@@ -168,8 +168,8 @@ GeometryData GeometryGenerator::CreateCylinder(int stackCount, int sliceCount, f
 
     float uvCoordX = 0.0f;
     float uvCoordY = 0.0f;
-    float uvOffsetY = topRadius*2.0f / static_cast<float>(stackCount);
-    float uvOffsetX = height / static_cast<float>(sliceCount);
+    float uvOffsetY = topRadius * 2.0f / static_cast<float>(stackCount);
+    float uvOffsetX = height * 0.5f / static_cast<float>(sliceCount);
 
 
     for (UINT i = 0; i < stackCount; i++)
@@ -322,6 +322,12 @@ GeometryData GeometryGenerator::CreateCurvyClinder(int stackCount, int sliceCoun
     float curveOffsetX = 0.0f;
     float curveOffsetXOffset = 0.0f;
 
+
+    float uvCoordX = 0.0f;
+    float uvCoordY = 0.0f;
+    float uvOffsetX = 1.0f / static_cast<float>(stackCount);
+    float uvOffsetY = height / static_cast<float>(sliceCount);
+
     for (UINT i = 0; i < stackCount; i++)
     {
         for (UINT j = 0; j < sliceCount; j++)
@@ -350,14 +356,16 @@ GeometryData GeometryGenerator::CreateCurvyClinder(int stackCount, int sliceCoun
             bottomRight.z = bottomRadius * sinf(angleRadians + offsetX);
 
             int colorIndex = (j) % 3;
-            verticies.push_back({ XMFLOAT3(bottomLeft.x, bottomLeft.y, bottomLeft.z), Colors[colorIndex] });
-            verticies.push_back({ XMFLOAT3(topLeft.x, topLeft.y, topLeft.z), Colors[colorIndex] });
-            verticies.push_back({ XMFLOAT3(topRight.x, topRight.y, topRight.z), Colors[colorIndex] });
-            verticies.push_back({ XMFLOAT3(bottomRight.x, bottomRight.y, bottomRight.z), Colors[colorIndex] });
+            verticies.push_back({ XMFLOAT3(bottomLeft.x, bottomLeft.y, bottomLeft.z), Colors[colorIndex], XMFLOAT2(uvCoordX, uvCoordY) });
+            verticies.push_back({ XMFLOAT3(topLeft.x, topLeft.y, topLeft.z), Colors[colorIndex],XMFLOAT2(uvCoordX, uvCoordY + uvOffsetY) });
+            verticies.push_back({ XMFLOAT3(topRight.x, topRight.y, topRight.z), Colors[colorIndex], XMFLOAT2(uvCoordX + uvOffsetX, uvCoordY + uvOffsetY) });
+            verticies.push_back({ XMFLOAT3(bottomRight.x, bottomRight.y, bottomRight.z), Colors[colorIndex], XMFLOAT2(uvCoordX + uvOffsetX, uvCoordY) });
 
             angleRadians += offsetX;
+            uvCoordX += uvOffsetX;
         }
         heightY += offsetY;
+        uvCoordY += uvOffsetY;
     }
     // Top
 
