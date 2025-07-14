@@ -362,7 +362,7 @@ void D3D12Engine::CreateGraphicsPipeline()
 	m_rScissorsRect.right = 1024;
 	m_rScissorsRect.bottom = 768;
 
-	ZeroMemory(&m_vViewPort, sizeof(D3D12_RECT));
+	ZeroMemory(&m_vViewPort, sizeof(D3D12_VIEWPORT));
 	m_vViewPort.TopLeftX = 0;
 	m_vViewPort.TopLeftY = 0;
 	m_vViewPort.Width = 1024;
