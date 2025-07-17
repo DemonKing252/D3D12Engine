@@ -47,7 +47,7 @@ public:
 	ComPtr<ID3D12DescriptorHeap> m_pCBVSRVDescriptorHeap;
 	std::unique_ptr<Camera> m_pCamera;
 	std::shared_ptr<UploadBuffer<ObjectPassConstants>> GetConstantBuffer() const;
-	static D3D12Engine* GetApp()
+	static D3D12Engine* Instance()
 	{
 		return s_pInstance;
 	}
@@ -72,6 +72,7 @@ public:
 	void CreateGraphicsPipeline();
 	void BuildPassConstantResources();
 	void CreateSceneGraph();
+	void ResetCommandObjects();
 
 	void OnUpdate() override;
 	void OnRender() override;

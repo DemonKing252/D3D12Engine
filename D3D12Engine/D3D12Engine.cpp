@@ -263,7 +263,6 @@ void D3D12Engine::CreateSceneGraph()
 	OutputDebugStringA(buffer);
 }
 
-
 void D3D12Engine::CompileShaders()
 {
 
@@ -437,22 +436,25 @@ void D3D12Engine::BuildPassConstantResources()
 	}
 }
 
+void D3D12Engine::ResetCommandObjects()
+{
+	ThrowIfFailed(m_commandAllocator->Reset());
+	ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
+}
+
 void D3D12Engine::OnUpdate()
 {
 	m_frameConstants.ViewProj = m_pCamera->GetViewProj();
 	m_pFrameConstants->CopyData(0, &m_frameConstants);
 
-	m_pSceneHierarchy->Update(GetApp());
+	m_pSceneHierarchy->Update(Instance());
 }
 
 void D3D12Engine::OnRender()
-{
+{		
 	// get the current back buffer index
 	m_swapChain->QueryInterface(IID_PPV_ARGS(&m_swapChain3));
 	m_iBackBufferIndex = m_swapChain3->GetCurrentBackBufferIndex();
-
-	ThrowIfFailed( m_commandAllocator->Reset() );
-	ThrowIfFailed( m_commandList->Reset(m_commandAllocator.Get(), nullptr) );
 
 	// indicate that the back buffer will be used as a render target
 	m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_rtvResources[m_iBackBufferIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
@@ -498,14 +500,5 @@ void D3D12Engine::OnRender()
 	m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pDSVResource.Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_COMMON));
 
 	// Indicate that the back buffer will be used to present
-	m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_rtvResources[m_iBackBufferIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
-
-	// submit command list
-	D3DApp::ExecuteCommandList();
-
-	// present the Frame
-	D3DApp::PresentFrame();
-
-	// sync the CPU/GPU to ensure that the GPU keeps up with the commands that was submitted by the CPU
-	D3DApp::WaitForGPU();
+	m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_rtvResources[m_iBackBufferIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));	
 }

@@ -142,7 +142,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			Eye.y = winApp->m_fRadius * sinf(XMConvertToRadians(winApp->m_fTheta));
 			Eye.z = winApp->m_fRadius * sinf(XMConvertToRadians(winApp->m_fPhi)) * cosf(XMConvertToRadians(winApp->m_fTheta));
 
-			D3D12Engine::GetApp()->m_pCamera->SetLens(Eye);
+			D3D12Engine::Instance()->m_pCamera->SetLens(Eye);
 
 			char buffer[70];
 			sprintf_s(buffer, "mouse x: %f, y: %f\n", winApp->m_fTheta, winApp->m_fPhi);
@@ -168,7 +168,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			Eye.y = winApp->m_fRadius * sinf(XMConvertToRadians(winApp->m_fTheta));
 			Eye.z = winApp->m_fRadius * sinf(XMConvertToRadians(winApp->m_fPhi)) * cosf(XMConvertToRadians(winApp->m_fTheta));
 
-			D3D12Engine::GetApp()->m_pCamera->SetLens(Eye);
+			D3D12Engine::Instance()->m_pCamera->SetLens(Eye);
 
 			char buffer[70];
 			sprintf_s(buffer, "mouse x: %f, y: %f\n", winApp->m_fTheta, winApp->m_fPhi);

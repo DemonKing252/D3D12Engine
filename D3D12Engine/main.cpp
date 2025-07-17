@@ -4,7 +4,7 @@
     Project:       D3D12Engine
     Author:         Liam Blake
     Created:        2025-05-28
-    Last Modified:  2025-06-18
+    Last Modified:  2025-07-16
 */
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     PSTR lpCmdLine, int nCmdShow)
@@ -16,8 +16,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     {
         win32App.DispatchMessages();
 
-        D3D12Engine::GetApp()->OnUpdate();
-        D3D12Engine::GetApp()->OnRender();
+        D3D12Engine::Instance()->ResetCommandObjects();
+
+        D3D12Engine::Instance()->OnUpdate();
+        D3D12Engine::Instance()->OnRender();
+        
+        D3D12Engine::Instance()->ExecuteCommandList();
+        D3D12Engine::Instance()->PresentFrame();
+        D3D12Engine::Instance()->WaitForGPU();
     }
 
     return 0;

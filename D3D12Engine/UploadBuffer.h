@@ -71,7 +71,7 @@ public:
 	void CopyData(const UINT& offsetInDescriptorHeap, T* data);
 	
 private:
-	size_t m_iStrideSize;
+	size_t m_iBufferSize;
 	void* m_pBytes;
 	ComPtr<ID3D12Resource> m_pUploadBuffer;
 };
@@ -79,7 +79,7 @@ private:
 template<class T>
 UploadBuffer<T>::UploadBuffer(ID3D12Device* device, T* data, const size_t& strideSize, const size_t& bufferSize)
 {
-	this->m_iStrideSize = strideSize;
+	this->m_iBufferSize = strideSize;
 	ThrowIfFailed(device->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
 		D3D12_HEAP_FLAG_NONE,
@@ -93,7 +93,7 @@ UploadBuffer<T>::UploadBuffer(ID3D12Device* device, T* data, const size_t& strid
 	CopyMemory(
 		reinterpret_cast<UINT8*>(m_pBytes), 
 		data,
-		m_iStrideSize
+		m_iBufferSize
 	);
 	m_pUploadBuffer->Unmap(0, nullptr);
 }
@@ -115,6 +115,6 @@ void UploadBuffer<T>::CopyData(const UINT& offsetInDescriptorHeap, T* data)
 	CopyMemory(
 		reinterpret_cast<UINT8*>(m_pBytes) + offsetInDescriptorHeap * 256U, 
 		data, 
-		m_iStrideSize
+		m_iBufferSize
 	);
 }
